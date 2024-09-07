@@ -151,7 +151,7 @@ function addTime(event) {
         // div.style.height='47.42px';
         //--------------------------------------------
         column.appendChild(div)
-        console.log(column, div);
+        console.log(div,column);
       });
     });
 }
