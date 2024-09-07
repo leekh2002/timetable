@@ -146,11 +146,15 @@ async function clickEvent(row, name, prof_name) {
     element.parentElement.querySelectorAll('div').forEach((element2) => {
       if (element !== element2) {
         const e1_topval = Math.floor(Number(element.style.top.split('px')[0]));
-        const e1_heival = Math.floor(Number(element.style.height.split('px')[0]));
+        const e1_heival = Math.floor(
+          Number(element.style.height.split('px')[0])
+        );
         const e2_topval = Math.floor(Number(element2.style.top.split('px')[0]));
-        const e2_heival = Math.floor(Number(element2.style.height.split('px')[0]));
+        const e2_heival = Math.floor(
+          Number(element2.style.height.split('px')[0])
+        );
         // console.log('element: ', element.style.top);
-        // console.log('element2: ',  Number(element2.style.top.split('px')[0]) + Number(element2.style.height.split('px')[0]));
+        // console.log('element2: ',  Number(elemenㄹㄴㄷt2.style.top.split('px')[0]) + Number(element2.style.height.split('px')[0]));
         if (
           (e1_topval >= e2_topval && e2_topval + e2_heival > e1_topval) ||
           (e1_topval <= e2_topval && e1_topval + e1_heival > e2_topval)
