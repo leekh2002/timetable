@@ -151,8 +151,47 @@ div.grid, .time{
   box-sizing: border-box;
 }
 
+.color0{
+  background-color: #aaf7ae;
+}
+.color1{
+  background-color: #92e396;
+}
+
+.color2{
+  background-color: #19f0d3;
+}
+
 .color3{
-  background-color: #45a049;
+  background-color: #e4eaf1;
+}
+
+.color4{
+  background-color: #d2d4d6;
+}
+
+.color5{
+  background-color: #efb1b1;
+}
+
+.color6{
+  background-color: #40dfad;
+}
+
+.color7{
+  background-color: #d4dc9df7;
+}
+
+.color8{
+  background-color: #d1d2d0;
+}
+
+.color9{
+  background-color: #b9c1b1;
+}
+
+.color10{
+  background-color: black;
 }
 
 div.cols{

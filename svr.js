@@ -1,9 +1,8 @@
 const express = require('express');
-const mysql = require('mysql2');
+const mysql = require('mysql');
 const path = require('path');
 const static = require('serve-static');
 const dbconfig = require('./config/dbconfig.json');
-const { parseArgs } = require('util');
 
 const pool = mysql.createPool({
   connectionLimit: 10,
@@ -34,6 +33,9 @@ app.get('/categoryanddeptfromdb', (req, res) => {
     console.log('데이터베이스 연결');
 
     const sql1 = `
+    DROP TEMPORARY TABLE IF EXISTS temp_major;
+    DROP TEMPORARY TABLE IF EXISTS temp_major2;
+    DROP TEMPORARY TABLE IF EXISTS temp_major3;
     create temporary table temp_major
     select es.major1
     from
@@ -68,14 +70,14 @@ app.get('/categoryanddeptfromdb', (req, res) => {
       (err, rows) => {
         conn.release();
         console.log('실행된 SQL: ' + exec.sql);
-
+        console.log(rows[8]);
         if (err) {
           console.log('SQL 실행시 오류발생');
           console.dir(err);
           res.json('<h1>SQL query 실행실패</h1>');
           return;
         } else {
-          res.json(rows[5]);
+          res.json(rows[8]);
         }
       }
     );
@@ -152,7 +154,7 @@ app.get('/process/search', (req, res) => {
       from lecture as a
       left join subject as b on a.sid=b.sid
       left join (select sid, class, group_concat(concat(day,time,'(',place,')') separator ', ') as time
-             from timetable
+             from time_info
                  group by sid,class) as c on a.sid=c.sid and a.class=c.class ` +
         where +
         ';',
@@ -174,6 +176,32 @@ app.get('/process/search', (req, res) => {
       }
     );
   });
+});
+
+app.get(`/process/getTime`, (req, res) => {
+  const sid = req.query.sid;
+  const lect_class = req.query.class;
+
+  pool.getConnection((err,conn)=>{
+    const exec = conn.query(`select day, time, place from time_info where sid=? and class=?`,
+                          [sid,lect_class],
+                          (err, rows)=>{
+                            conn.release();
+                            console.log('실행된 SQL: ' + exec.sql);
+                    
+                            if (err) {
+                              console.log('SQL 실행시 오류발생');
+                              console.dir(err);
+                              res.writeHead('200', { 'Content-Type': 'text/html; charset=utf8' });
+                              res.write('<h1>SQL query 실행실패</h1>');
+                              res.end();
+                              return;
+                            } else {
+                              res.json(rows);
+                            }
+                          }
+    );
+  })
 });
 
 app.listen(3000, () => {

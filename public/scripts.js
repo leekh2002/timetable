@@ -101,8 +101,16 @@ document.getElementById('searchForm').addEventListener('submit', (event) => {
         addButton.className += 'add-btn';
         addButton.textContent = '+ 추가';
         newRow.appendChild(addButton);
-        newRow.addEventListener('mouseenter', (event) => {
-          addTime(event);
+        const param_row = newRow;
+        newRow.addEventListener('mouseenter', function (event) {
+          enterEvent(event);
+        });
+        newRow.addEventListener('mouseleave', function (event) {
+          leaveEvent(event);
+        });
+        newRow.addEventListener('click', (event) => {
+          console.log(param_row);
+          clickEvent(param_row, name, prof_name);
         });
         //console.log('newRow: ',newRow);
         tbody.appendChild(newRow);
@@ -111,14 +119,63 @@ document.getElementById('searchForm').addEventListener('submit', (event) => {
     });
 });
 
-function addTime(event) {
-  // console.log('element:', event.target);
-  const tdElements = event.target.querySelectorAll('td');
+let class_num2 = 0;
+let color_num = 0;
+
+function enterEvent(event) {
+  displayTime(event.target.querySelectorAll('td'), 10, '0.2', 0);
+}
+
+let displayed_element = [];
+
+function leaveEvent(event) {
+  displayed_element.forEach((element) => {
+    element.remove();
+  });
+}
+let k = 0;
+async function clickEvent(row, name, prof_name) {
+  console.log('k: ', k++);
+  const td = row.querySelectorAll('td');
+  await displayTime(td, color_num++ % 10, '1', 1);
+  let flag = 0;
+  displayed_element.forEach((element) => {
+    element.remove();
+  });
+  document.querySelectorAll('.col' + `${class_num2 - 1}`).forEach((element) => {
+    element.parentElement.querySelectorAll('div').forEach((element2) => {
+      if (element !== element2) {
+        const e1_topval = Math.floor(Number(element.style.top.split('px')[0]));
+        const e1_heival = Math.floor(Number(element.style.height.split('px')[0]));
+        const e2_topval = Math.floor(Number(element2.style.top.split('px')[0]));
+        const e2_heival = Math.floor(Number(element2.style.height.split('px')[0]));
+        // console.log('element: ', element.style.top);
+        // console.log('element2: ',  Number(element2.style.top.split('px')[0]) + Number(element2.style.height.split('px')[0]));
+        if (
+          (e1_topval >= e2_topval && e2_topval + e2_heival > e1_topval) ||
+          (e1_topval <= e2_topval && e1_topval + e1_heival > e2_topval)
+        ) {
+          flag = 1;
+          return;
+        }
+      }
+    });
+    if (flag == 1) return;
+  });
+  if (flag == 1) {
+    document
+      .querySelectorAll('.col' + `${class_num2 - 1}`)
+      .forEach((element) => {
+        element.remove();
+      });
+    alert('해당시간과 겹치는 강의가 있습니다.');
+  }
+}
+
+async function displayTime(tdElements, color, opacity, op) {
   const name = tdElements[4].textContent;
   const prof_name = tdElements[7].textContent;
-
-  // console.log(tdElements[2].textContent);
-  fetch(
+  await fetch(
     `/process/getTime?sid=${tdElements[2].textContent}&class=${tdElements[3].textContent}`,
     {
       method: 'GET',
@@ -126,7 +183,6 @@ function addTime(event) {
   )
     .then((res) => res.json())
     .then((data) => {
-      console.log(data);
       const dayDict = {};
       dayDict['월'] = '1';
       dayDict['화'] = '2';
@@ -135,23 +191,41 @@ function addTime(event) {
       dayDict['금'] = '5';
       dayDict['토'] = '6';
       dayDict['일'] = '7';
+      let i = 0;
       data.forEach((element) => {
-        console.log(element.day);
+        if (element.day == null) return;
         const column = document
           .querySelector(`[data-day='${dayDict[element.day]}']`)
           .getElementsByClassName('cols')[0];
-        const div=document.createElement('div');
-        div.style.position='absolute';
-        div.style.width='113.31px';
-        div.className+='subject ';
-        div.className+='color3';
 
-        //-------------내일 처리해야할거----fesa----------
-        // div.style.top='0px';
-        // div.style.height='47.42px';
-        //--------------------------------------------
-        column.appendChild(div)
-        console.log(column);
+        const div = document.createElement('div');
+        if (op == 1) div.className += 'col' + `${class_num2} `;
+
+        div.style.position = 'absolute';
+        div.style.width = '113.31px';
+        div.className += 'color' + `${color}`;
+        //div.style.backgroundColor = color;
+        div.style.opacity = opacity;
+        //div.style.filter = 'grayscale(100%)';
+
+        const start = element.time.split('~')[0];
+        const end = element.time.split('~')[1];
+        const start_hour = Number(start.split(':')[0]);
+        const start_min = Number(start.split(':')[1]);
+        const end_hour = Number(end.split(':')[0]);
+        const end_min = Number(end.split(':')[1]);
+        div.style.top =
+          `${(((start_hour - 8) * 60 + start_min) / 960) * 758.72}` + 'px';
+        div.style.height =
+          `${
+            ((end_hour * 60 + end_min - (start_hour * 60 + start_min)) / 60) *
+            47.42
+          }` + 'px';
+
+        column.appendChild(div);
+        if (op == 0) displayed_element.push(div);
+        i++;
       });
+      if (op == 1) class_num2++;
     });
 }
