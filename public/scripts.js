@@ -332,3 +332,15 @@ async function displayTime(tdElements, color, opacity, op) {
       if (op == 1) class_num2++;
     });
 }
+
+document.querySelector('.goto-generator').addEventListener('click', function() {
+  document.querySelector('.days-table').style.display = 'none';
+  document.querySelector('.timetable').style.display = 'none';
+  document.querySelector('.nontimes').style.display = 'none';
+
+  // 'filtering-section', 'add-group', 'subject-group' 표시
+  document.querySelector('.filtering-section').style.display = 'grid';
+  document.querySelector('.add-group').style.display = 'block';
+  document.querySelector('.subject-group').style.display = 'block';
+  // document.querySelector('.goto-generator').style.display='none';
+});

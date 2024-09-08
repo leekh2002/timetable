@@ -420,3 +420,68 @@ p {
   width: 13px; /* 아이콘의 크기 설정 */
   height: 13px;
 }
+
+.goto-generator {
+  display: inline-block; /* 텍스트 크기에 맞게 버튼 크기 조정 */
+  text-align: center;
+  border: none;
+  background: none;
+  color: blue; /* 텍스트 색상 파란색 */
+  font-weight: bold;
+  margin-bottom: 10px;
+  cursor: pointer; /* 클릭 가능한 커서로 변경 */
+  text-decoration: none; /* 밑줄 없애기 */
+}
+
+.goto-generator:hover {
+  background: none; /* hover 시에도 배경색이 없도록 설정 */
+}
+
+/* 'filtering-section' 내의 각 항목 스타일 */
+.filtering-section {
+  display: none;
+  grid-template-columns: 1fr 1fr; /* 2열 그리드 레이아웃 */
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.filtering-section div {
+  border: 1px solid #ccc;
+  padding: 10px;
+  min-width: 150px; /* 최소 너비를 설정하여 유연하게 크기 조정 */
+  text-align: center;
+}
+
+/* 검색 옵션을 위한 스타일 */
+.filtering-section .search-options {
+  display: flex;
+  flex-direction: column;
+  gap: 5px; /* 옵션 간의 간격을 추가 */
+  text-align: left; /* 옵션들이 좌측 정렬되도록 설정 */
+}
+
+/* '그룹 추가' 버튼 스타일 */
+.add-group {
+  display: inline-block; /* 텍스트 크기에 맞게 버튼 크기 조정 */
+  text-align: left;
+  border: none;
+  background: none;
+  color: green; /* 텍스트 색상 초록색 */
+  font-weight: bold;
+  margin-bottom: 10px;
+  cursor: pointer; 
+  text-decoration: underline; /* 밑줄 없애기 */
+}
+
+.add-group:hover {
+  background: none; /* hover 시에도 배경색이 없도록 설정 */
+}
+/* '그룹 1' div 스타일 */
+.subject-group {
+  display: none; /* 초기 상태에서 숨김 */
+}
+
+.subject-group .group1 {
+  border: 2px solid #000;
+  padding: 15px;
+  margin-bottom: 10px;
+}

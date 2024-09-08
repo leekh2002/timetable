@@ -92,6 +92,7 @@
 
     <!-- 시간표 테이블 공간 -->
     <div class="timetable-list" id="timetableList">
+      <button class="goto-generator">시간표 생성기 바로가기</button>
       <button class="close-timetable">닫기</button>
       <table class="days-table">
         <thead>
@@ -328,6 +329,46 @@
         </tbody>
       </table>
       <div class="nontimes"></div>
+      <!-- 필터링 섹션 -->
+      <div class="filtering-section">
+        <div>
+          강의간 시간 간격
+          <div class="search-options">
+            <label><input type="checkbox"> 최소 1시간 간격</label>
+            <label><input type="checkbox"> 최소 2시간 간격</label>
+          </div>
+        </div>
+        <div>
+          요일 공강
+          <div class="search-options">
+            <label><input type="checkbox"> 월요일 공강</label>
+            <label><input type="checkbox"> 금요일 공강</label>
+          </div>
+        </div>
+        <div>
+          연속강의
+          <div class="search-options">
+            <label><input type="checkbox"> 2시간 연속강의</label>
+            <label><input type="checkbox"> 3시간 연속강의</label>
+          </div>
+        </div>
+        <div>
+          등하교 시간
+          <div class="search-options">
+            <label><input type="checkbox"> 오전 등교</label>
+            <label><input type="checkbox"> 오후 하교</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 그룹 추가 버튼 -->
+      <button class="add-group">그룹 추가</button>
+
+      <!-- Subject 그룹 -->
+      <div class="subject-group">
+        <div class="group1">그룹 1</div>
+      </div>
     </div>
+    
   </body>
 </html>
