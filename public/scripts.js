@@ -1,5 +1,6 @@
 const category = document.getElementById('courseCategory');
 const department = document.getElementById('departments');
+let width_value = '113.31px';
 
 document.addEventListener('DOMContentLoaded', function () {});
 
@@ -9,7 +10,6 @@ const categoryAndDeptfromdb = (category, department) => {
   })
     .then((res) => res.json())
     .then((data) => {
-      console.log(data);
       data.forEach((element) => {
         var option = document.createElement('option');
         option.value = element.major1;
@@ -48,15 +48,12 @@ function adjustTableWidth() {
   const element = document.querySelector('.output_result');
   const scrollbarWidth = 17;
 
-  console.log('height: ', element.scrollHeight);
   if (element.scrollHeight >= 400) {
-    console.log('height: ', element.scrollHeight);
     thead.style.width = 'calc(100% - ' + scrollbarWidth + 'px)';
   } else {
     thead.style.width = '100%';
   }
   tbody.style.width = '100%'; // tbody는 항상 100% 너비를 유지
-  console.log('asefsaeiohf;seaoidjaelsifh');
 }
 
 document.getElementById('searchForm').addEventListener('submit', (event) => {
@@ -69,8 +66,6 @@ document.getElementById('searchForm').addEventListener('submit', (event) => {
   const major = document.getElementById('department').value;
   const name = document.getElementById('courseNumber').value;
   const tbody = document.querySelector('.output_result tbody');
-  //console.log('tbody:',tbody);
-  //console.log(name, major);
   tbody.replaceChildren();
 
   const queryString = `inst_method=${encodeURIComponent(
@@ -81,17 +76,14 @@ document.getElementById('searchForm').addEventListener('submit', (event) => {
     major
   )}&name=${encodeURIComponent(name)}`;
 
-  console.log(formData);
   fetch(`/process/search?${queryString}`, {
     method: 'GET',
   })
     .then((res) => res.json())
     .then((data) => {
-      // console.log(data);
       data.forEach((element) => {
         const keys = Object.keys(element);
         const newRow = document.createElement('tr');
-        // console.log('keys: ',keys)
         keys.forEach((key) => {
           const newCell = document.createElement('td');
           newCell.textContent = element[key];
@@ -108,11 +100,10 @@ document.getElementById('searchForm').addEventListener('submit', (event) => {
         newRow.addEventListener('mouseleave', function (event) {
           leaveEvent(event);
         });
-        newRow.addEventListener('click', (event) => {
-          console.log(param_row);
-          clickEvent(param_row, name, prof_name);
+
+        addButton.addEventListener('click', (event) => {
+          clickEvent(param_row);
         });
-        //console.log('newRow: ',newRow);
         tbody.appendChild(newRow);
       });
       adjustTableWidth();
@@ -121,27 +112,66 @@ document.getElementById('searchForm').addEventListener('submit', (event) => {
 
 let class_num2 = 0;
 let color_num = 0;
+let displayed_element = [];
 
 function enterEvent(event) {
   displayTime(event.target.querySelectorAll('td'), 10, '0.2', 0);
 }
 
-let displayed_element = [];
-
 function leaveEvent(event) {
-  displayed_element.forEach((element) => {
-    element.remove();
-  });
+  removeElements(displayed_element);
 }
-let k = 0;
-async function clickEvent(row, name, prof_name) {
-  console.log('k: ', k++);
+
+let sid_set = [];
+async function clickEvent(row) {
   const td = row.querySelectorAll('td');
+  let i;
+  for (i = 0; i < sid_set.length; i++) {
+    if (td[2].textContent == sid_set[i]) {
+      alert('동일한 과목코드를 가진 과목은 두개 이상 담을 수 없습니다.');
+      break;
+    }
+  }
+  if (i < sid_set.length) return;
+
   await displayTime(td, color_num++ % 10, '1', 1);
   let flag = 0;
   displayed_element.forEach((element) => {
     element.remove();
   });
+  if (td[8].textContent == '') {
+    const nontime = document.querySelector('.nontimes');
+    const div = document.createElement('div');
+    const span = document.createElement('span');
+    const img = new Image();
+
+    div.setAttribute('data-sid', td[2].textContent);
+    div.className += 'subject';
+
+    span.className += 'name';
+    span.textContent = td[4].textContent;
+    span.style.setProperty('font-size', '15px', 'important');
+
+    img.src = `./image/bin.png`;
+    img.alt = 'bin';
+    img.addEventListener('click', (event) => {
+      const parent = img.parentElement;
+      for (let i = 0; i < sid_set.length; i++) {
+        if (sid_set[i] == parent.dataset.sid) {
+          sid_set.splice(i, 1);
+          break;
+        }
+      }
+      parent.remove();
+    });
+    img.style.width = '13px';
+    img.style.height = '13px';
+    div.appendChild(span);
+    div.appendChild(img);
+    nontime.appendChild(div);
+    sid_set.push(td[2].textContent);
+    return;
+  }
   document.querySelectorAll('.col' + `${class_num2 - 1}`).forEach((element) => {
     element.parentElement.querySelectorAll('div').forEach((element2) => {
       if (element !== element2) {
@@ -153,11 +183,10 @@ async function clickEvent(row, name, prof_name) {
         const e2_heival = Math.floor(
           Number(element2.style.height.split('px')[0])
         );
-        // console.log('element: ', element.style.top);
-        // console.log('element2: ',  Number(elemenㄹㄴㄷt2.style.top.split('px')[0]) + Number(element2.style.height.split('px')[0]));
         if (
-          (e1_topval+2 >= e2_topval && e2_topval + e2_heival > e1_topval+2) ||
-          (e1_topval <= e2_topval+2 && e1_topval + e1_heival > e2_topval+2)
+          (e1_topval + 2 >= e2_topval &&
+            e2_topval + e2_heival > e1_topval + 2) ||
+          (e1_topval <= e2_topval + 2 && e1_topval + e1_heival > e2_topval + 2)
         ) {
           flag = 1;
           return;
@@ -167,15 +196,83 @@ async function clickEvent(row, name, prof_name) {
     if (flag == 1) return;
   });
   if (flag == 1) {
+    removeElements(document.querySelectorAll('.col' + `${class_num2 - 1}`));
+    alert('해당시간과 겹치는 강의가 있습니다.');
+    return;
+  } else {
     document
       .querySelectorAll('.col' + `${class_num2 - 1}`)
       .forEach((element) => {
-        element.remove();
+        const h5 = document.createElement('h5');
+        const em = document.createElement('em');
+        const span = document.createElement('span');
+        const p = document.createElement('p');
+        const img = new Image();
+        const day_div = element.parentElement.parentElement;
+
+        if (day_div.dataset.day == 6) {
+          day_div.parentElement.style.removeProperty('display');
+          document.querySelector('.sat').style.removeProperty('display');
+          width_value = '96.88px';
+
+          for (let i = 0; i < class_num2; i++) {
+            document.querySelectorAll('.col' + `${i}`).forEach((element) => {
+              element.style.width = width_value;
+            });
+          }
+        }
+
+        img.src = `./image/bin.png`;
+        img.className += 'bin-icon';
+        img.alt = 'bin';
+        img.addEventListener('click', (event) => {
+          const parent = img.parentElement;
+
+          for (let i = 0; i < sid_set.length; i++) {
+            if (sid_set[i] == parent.dataset.sid) {
+              sid_set.splice(i, 1);
+              break;
+            }
+          }
+          if (parent.parentElement.parentElement.dataset.day == 6) {
+            if (parent.parentElement.querySelectorAll('div').length == 1) {
+              width_value = '113.31px';
+              for (let i = 0; i < class_num2; i++) {
+                const div = document.querySelectorAll('.col' + `${i}`);
+                console.log('div: ', element,' ',i);
+                if (div == null) continue;
+                div.forEach((element) => {
+                  element.style.width = width_value;
+                });
+              }
+              parent.parentElement.parentElement.parentElement.style.display =
+                'none';
+              document.querySelector('.sat').style.display = 'none';
+            }
+          }
+          removeElements(
+            document.querySelectorAll('.' + `${parent.classList[0]}`)
+          );
+        });
+        h5.textContent = td[4].textContent;
+        em.textContent = td[7].textContent;
+        span.textContent = element.dataset.place;
+        p.appendChild(em);
+        p.appendChild(span);
+        element.appendChild(h5);
+        element.appendChild(p);
+        element.appendChild(img);
+
       });
-    alert('해당시간과 겹치는 강의가 있습니다.');
+    sid_set.push(td[2].textContent);
   }
 }
 
+function removeElements(elements) {
+  elements.forEach((element) => {
+    element.remove();
+  });
+}
 async function displayTime(tdElements, color, opacity, op) {
   const name = tdElements[4].textContent;
   const prof_name = tdElements[7].textContent;
@@ -197,7 +294,9 @@ async function displayTime(tdElements, color, opacity, op) {
       dayDict['일'] = '7';
       let i = 0;
       data.forEach((element) => {
-        if (element.day == null) return;
+        if (element.day == null) {
+          return;
+        }
         const column = document
           .querySelector(`[data-day='${dayDict[element.day]}']`)
           .getElementsByClassName('cols')[0];
@@ -206,11 +305,9 @@ async function displayTime(tdElements, color, opacity, op) {
         if (op == 1) div.className += 'col' + `${class_num2} `;
 
         div.style.position = 'absolute';
-        div.style.width = '113.31px';
+        div.style.width = width_value;
         div.className += 'color' + `${color}`;
-        //div.style.backgroundColor = color;
         div.style.opacity = opacity;
-        //div.style.filter = 'grayscale(100%)';
 
         const start = element.time.split('~')[0];
         const end = element.time.split('~')[1];
@@ -225,8 +322,10 @@ async function displayTime(tdElements, color, opacity, op) {
             ((end_hour * 60 + end_min - (start_hour * 60 + start_min)) / 60) *
             47.42
           }` + 'px';
-
+        div.style.overflow = 'hidden';
         column.appendChild(div);
+        div.setAttribute('data-place', element.place);
+        div.setAttribute('data-sid', tdElements[2].textContent);
         if (op == 0) displayed_element.push(div);
         i++;
       });

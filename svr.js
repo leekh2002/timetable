@@ -1,5 +1,5 @@
 const express = require('express');
-const mysql = require('mysql2');
+const mysql = require('mysql');
 const path = require('path');
 const static = require('serve-static');
 const dbconfig = require('./config/dbconfig.json');
@@ -131,7 +131,6 @@ app.get('/process/search', (req, res) => {
       name.charAt(9)
     );
     if (name.charAt(4) == '-' && name.charAt(9) == '-') {
-      console.log('코드 검색');
       params.push(name.substring(0, 9));
       params.push(name.substring(10));
     } else params.push('%' + name + '%');
@@ -183,23 +182,24 @@ app.get(`/process/getTime`, (req, res) => {
   const lect_class = req.query.class;
 
   pool.getConnection((err,conn)=>{
-    const exec = conn.query(`select day, time, place from time_info where sid=? and class=?`,
-                          [sid,lect_class],
-                          (err, rows)=>{
-                            conn.release();
-                            console.log('실행된 SQL: ' + exec.sql);
-                    
-                            if (err) {
-                              console.log('SQL 실행시 오류발생');
-                              console.dir(err);
-                              res.writeHead('200', { 'Content-Type': 'text/html; charset=utf8' });
-                              res.write('<h1>SQL query 실행실패</h1>');
-                              res.end();
-                              return;
-                            } else {
-                              res.json(rows);
-                            }
-                          }
+    const exec = conn.query(
+      `select day, time, place from time_info where sid=? and class=?`,
+      [sid,lect_class],
+      (err, rows)=>{
+        conn.release();
+        console.log('실행된 SQL: ' + exec.sql);
+
+        if (err) {
+          console.log('SQL 실행시 오류발생');
+          console.dir(err);
+          res.writeHead('200', { 'Content-Type': 'text/html; charset=utf8' });
+          res.write('<h1>SQL query 실행실패</h1>');
+          res.end();
+          return;
+        } else {
+          res.json(rows);
+        }
+      }
     );
   })
 });

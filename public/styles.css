@@ -48,7 +48,7 @@ body {
   display: flex;
   flex-direction: column;
   margin-bottom: 20px;
-  width: calc(33.33% - 10px);
+  width: calc(25% - 10px);
 }
 
 .form-group.full-width {
@@ -91,7 +91,7 @@ button:hover {
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-  overflow: auto
+  overflow: auto;
 }
 
 .timetable-list.show {
@@ -122,7 +122,9 @@ button:hover {
   table-layout: fixed;
 }
 
-.timetable th, .timetable td, .days-table th {
+.timetable th,
+.timetable td,
+.days-table th {
   border: 1px solid #ccc;
   padding: 0;
   text-align: center;
@@ -141,87 +143,113 @@ thead th {
   font-size: 16px;
 }
 
-.times{
+.times {
   height: 100%;
 }
 
-div.grid, .time{
+div.grid,
+.time {
   height: 47.42px;
   border: 1px solid #cccccc;
   box-sizing: border-box;
 }
 
-.color0{
+.color0 {
   background-color: #aaf7ae;
 }
-.color1{
+.color1 {
   background-color: #92e396;
 }
 
-.color2{
+.color2 {
   background-color: #19f0d3;
 }
 
-.color3{
+.color3 {
   background-color: #e4eaf1;
 }
 
-.color4{
+.color4 {
   background-color: #d2d4d6;
 }
 
-.color5{
+.color5 {
   background-color: #efb1b1;
 }
 
-.color6{
+.color6 {
   background-color: #40dfad;
 }
 
-.color7{
+.color7 {
   background-color: #d4dc9df7;
 }
 
-.color8{
+.color8 {
   background-color: #d1d2d0;
 }
 
-.color9{
+.color9 {
   background-color: #b9c1b1;
 }
 
-.color10{
+.color10 {
   background-color: black;
 }
 
-div.cols{
+div.cols {
   position: absolute;
   width: 100%;
   height: 100%;
   z-index: 11;
 }
-h6{
- display: block;
+h6 {
+  display: block;
   margin: 0px 7px 0px 7px;
   unicode-bidi: isolate;
   letter-spacing: -0.5px;
-  overflow: hidden;        /* 넘치는 텍스트를 숨김 */
-  white-space: normal;     /* 줄바꿈 허용 */
-  word-wrap: break-word;   /* 단어가 길면 줄바꿈 */
-  text-align: left; 
+  overflow: hidden; /* 넘치는 텍스트를 숨김 */
+  white-space: normal; /* 줄바꿈 허용 */
+  word-wrap: break-word; /* 단어가 길면 줄바꿈 */
+  text-align: left;
+}
+h5 {
+  display: block;
+  margin: 0px 7px 0px 7px;
+  unicode-bidi: isolate;
+  letter-spacing: -0.5px;
+  overflow: hidden; /* 넘치는 텍스트를 숨김 */
+  white-space: normal; /* 줄바꿈 허용 */
+  word-wrap: break-word; /* 단어가 길면 줄바꿈 */
+  text-align: left;
 }
 
-div.subject p, em{
+div.subject p,
+em {
   margin: 0px 5px 0px 0px;
-    color: #737373;
-    font-weight: bold;
-    font-size: 9px;
+  color: #737373;
+  font-weight: bold;
+  font-size: 9px;
+  overflow: hidden; /* 넘치는 텍스트를 숨김 */
+  white-space: normal; /* 줄바꿈 허용 */
+  word-wrap: break-word; /* 단어가 길면 줄바꿈 */
 }
-div.nontimes{
+
+span {
+  margin: 0px 5px 0px 0px;
+  color: #737373;
+  font-weight: bold;
+  font-size: 9px;
+  overflow: hidden; /* 넘치는 텍스트를 숨김 */
+  white-space: normal; /* 줄바꿈 허용 */
+  word-wrap: break-word; /* 단어가 길면 줄바꿈 */
+}
+
+div.nontimes {
   margin-top: 8px;
   border: 2px solid #d6d6d6;
 }
-div.subject{
+div.subject {
   border-bottom: 1px solid #d6d6d6;
   overflow: hidden;
 }
@@ -253,7 +281,6 @@ div.subject{
 
 #results {
   margin-top: 20px;
-  
 }
 
 .output_result {
@@ -263,7 +290,8 @@ div.subject{
   margin-top: 10px;
 }
 
-.output_result th, .output_result td {
+.output_result th,
+.output_result td {
   padding: 10px;
   border: 1px solid #ddd;
   text-align: left;
@@ -273,10 +301,10 @@ div.subject{
   background-color: #f2f2f2;
 }
 
-.output_result td{
+.output_result td {
   font-size: x-small;
-  white-space: nowrap;   
-  overflow: hidden; 
+  white-space: nowrap;
+  overflow: hidden;
   min-width: 1px;
   max-width: 100px;
 }
@@ -285,55 +313,55 @@ div.subject{
   width: 100%;
   border-collapse: collapse;
   max-height: 400px; /* 조회 결과 테이블에 대한 최대 높이를 설정 */
-  overflow-y: auto;  /* 세로 스크롤 추가 */
-  display: block;    /* 스크롤 동작을 위해 display 속성을 block으로 설정 */
+  overflow-y: auto; /* 세로 스크롤 추가 */
+  display: block; /* 스크롤 동작을 위해 display 속성을 block으로 설정 */
 }
 
 .results-section .output_result thead,
 .results-section .output_result tbody tr {
-  display: table;    /* 테이블 형태 유지 */
-  width: 100%;       /* 테이블 너비 설정 */
+  display: table; /* 테이블 형태 유지 */
+  width: 100%; /* 테이블 너비 설정 */
   table-layout: fixed; /* 테이블 레이아웃 고정 */
 }
 
 .results-section .output_result thead {
-  display: table;       /* thead는 고정 */
-  width: 100%; 
+  display: table; /* thead는 고정 */
+  width: 100%;
   table-layout: fixed;
 }
 
 .results-section .output_result tbody {
-  display: block;       /* tbody는 스크롤 가능하도록 block으로 설정 */
-  max-height: 400px;    /* 스크롤이 생길 최대 높이 */
-  overflow-y: auto;     /* 세로 스크롤 추가 */
-  table-layout: fixed;    /* 가로 스크롤 제거 */
-  width: 100%;          /* 테이블 너비 설정 */
-  overflow-x: hidden;     
+  display: block; /* tbody는 스크롤 가능하도록 block으로 설정 */
+  max-height: 400px; /* 스크롤이 생길 최대 높이 */
+  overflow-y: auto; /* 세로 스크롤 추가 */
+  table-layout: fixed; /* 가로 스크롤 제거 */
+  width: 100%; /* 테이블 너비 설정 */
+  overflow-x: hidden;
   padding-right: 12px;
 }
 
 .results-section .output_result th,
 .results-section .output_result td {
-  padding: 8px;         /* 셀 내 패딩 */
-  text-align: left;     /* 셀 안의 텍스트 왼쪽 정렬 */
+  padding: 8px; /* 셀 내 패딩 */
+  text-align: left; /* 셀 안의 텍스트 왼쪽 정렬 */
   border: 1px solid #ddd; /* 테두리 */
-  width: 10%;   
+  width: 10%;
 }
 
 .results-section .output_result tbody tr {
-  display: table;       /* tbody 내 각 행을 테이블처럼 표시 */
-  width: 100%;          /* 각 행의 너비를 100%로 설정 */
-  table-layout: fixed;  /* 테이블 레이아웃 고정 */
+  display: table; /* tbody 내 각 행을 테이블처럼 표시 */
+  width: 100%; /* 각 행의 너비를 100%로 설정 */
+  table-layout: fixed; /* 테이블 레이아웃 고정 */
 }
 
 .results-section .output_result {
-  width: 100%;            /* 테이블 전체 너비를 100%로 설정 */
+  width: 100%; /* 테이블 전체 너비를 100%로 설정 */
   border-collapse: collapse; /* 테이블 테두리 고정 */
   table-layout: fixed;
 }
 
 .results-section .output_result::-webkit-scrollbar {
-    width: 12px; /* 적당한 스크롤바 너비 */
+  width: 12px; /* 적당한 스크롤바 너비 */
 }
 
 .output_result tbody tr {
@@ -348,7 +376,7 @@ div.subject{
 .add-btn {
   display: none;
   position: absolute;
-  top: 50%; 
+  top: 50%;
   left: 50%;
   width: fit-content !important;
   transform: translate(-50%, -50%);
@@ -357,9 +385,38 @@ div.subject{
   cursor: pointer;
   color: black !important;
   background: none !important;
-  opacity: 0.5;
 }
 
 .output_result tbody tr:hover .add-btn {
   display: block;
-} 
+}
+p {
+  margin: 0px;
+}
+
+/* .subject {
+  position: relative;
+} */
+
+.close-btn {
+  position: absolute;
+  top: 1px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: red;
+  font-size: 18px;
+  cursor: pointer;
+  width: fit-content !important;
+  border: none;
+  color: black !important;
+  background: none !important;
+  display: none;
+}
+.bin-icon {
+  position: absolute;
+  right: 5px; /* 우측으로 5px 떨어지게 설정 */
+  bottom: 5px; /* 하단으로 5px 떨어지게 설정 */
+  width: 13px; /* 아이콘의 크기 설정 */
+  height: 13px;
+}
