@@ -156,8 +156,8 @@ async function clickEvent(row, name, prof_name) {
         // console.log('element: ', element.style.top);
         // console.log('element2: ',  Number(elemenㄹㄴㄷt2.style.top.split('px')[0]) + Number(element2.style.height.split('px')[0]));
         if (
-          (e1_topval >= e2_topval && e2_topval + e2_heival > e1_topval) ||
-          (e1_topval <= e2_topval && e1_topval + e1_heival > e2_topval)
+          (e1_topval+2 >= e2_topval && e2_topval + e2_heival > e1_topval+2) ||
+          (e1_topval <= e2_topval+2 && e1_topval + e1_heival > e2_topval+2)
         ) {
           flag = 1;
           return;
