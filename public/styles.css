@@ -437,38 +437,70 @@ p {
   background: none; /* hover 시에도 배경색이 없도록 설정 */
 }
 
-/* 'filtering-section' 내의 각 항목 스타일 */
+.filtering-section div:hover {
+  transform: translateY(-5px); /* hover 시 살짝 위로 올라가는 효과 */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* hover 시 그림자 강화 */
+}
+
 .filtering-section {
+  /* display: none;
+  grid-template-columns: 1fr 1fr; 
+  gap: 10px;
+  margin-bottom: 10px; */
+
   display: none;
   grid-template-columns: 1fr 1fr; /* 2열 그리드 레이아웃 */
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 20px; /* 카드 간의 간격을 넓게 설정 */
+  margin-bottom: 20px;
+  padding: 20px; /* 내부 여백 추가 */
+  background-color: #f0f4f8; /* 섹션 전체 배경색 추가 */
+  border-radius: 8px; /* 섹션 전체 모서리를 둥글게 */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 .filtering-section div {
-  border: 1px solid #ccc;
+  /* border: 1px solid #ccc;
   padding: 10px;
-  min-width: 150px; /* 최소 너비를 설정하여 유연하게 크기 조정 */
-  text-align: center;
+  min-width: 150px; 
+  text-align: center; */
+
+  border: 1px solid #ccc;
+  padding: 15px;
+  min-width: 150px;
+  text-align: left;
+  background-color: #ffffff; /* 카드 배경색 */
+  border-radius: 8px; /* 카드 모서리 둥글게 */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 카드 그림자 */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 /* 검색 옵션을 위한 스타일 */
 .filtering-section .search-options {
+  /* display: flex;
+  flex-direction: column;
+  gap: 5px; 
+  text-align: left;  */
+
   display: flex;
   flex-direction: column;
-  gap: 5px; /* 옵션 간의 간격을 추가 */
-  text-align: left; /* 옵션들이 좌측 정렬되도록 설정 */
+  gap: 10px; /* 옵션 간의 간격을 추가 */
+  text-align: left;
+  font-size: 14px; /* 폰트 크기 조정 */
 }
 
+.filtering-section label {
+  font-weight: bold;
+  color: #333; /* 라벨 색상 변경 */
+}
 /* '그룹 추가' 버튼 스타일 */
 .add-group {
-  display: inline-block; /* 텍스트 크기에 맞게 버튼 크기 조정 */
+  display: none; /* 텍스트 크기에 맞게 버튼 크기 조정 */
   text-align: left;
   border: none;
   background: none;
   color: green; /* 텍스트 색상 초록색 */
   font-weight: bold;
   margin-bottom: 10px;
-  cursor: pointer; 
+  cursor: pointer;
   text-decoration: underline; /* 밑줄 없애기 */
 }
 
@@ -477,7 +509,7 @@ p {
 }
 /* '그룹 1' div 스타일 */
 .subject-group {
-  display: none; /* 초기 상태에서 숨김 */
+  display: none;
 }
 
 .subject-group .group1 {

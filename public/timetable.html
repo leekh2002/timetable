@@ -91,284 +91,300 @@
     </div>
 
     <!-- 시간표 테이블 공간 -->
-    <div class="timetable-list" id="timetableList">
-      <button class="goto-generator">시간표 생성기 바로가기</button>
-      <button class="close-timetable">닫기</button>
-      <table class="days-table">
-        <thead>
-          <tr>
-            <th class="time"></th>
-            <th>Mon</th>
-            <th>Tue</th>
-            <th>Wed</th>
-            <th>Thu</th>
-            <th>Fri</th>
-            <th style="display: none" class="sat">Sat</th>
-            <th style="display: none" class="sun">Sun</th>
-          </tr>
-        </thead>
-      </table>
+    <form action="/process/filter" method="get" id="filterForm">
+      <div class="timetable-list" id="timetableList">
+        <button class="goto-generator">시간표 생성기 바로가기</button>
+        <button class="close-timetable">닫기</button>
+        <table class="days-table">
+          <thead>
+            <tr>
+              <th class="time"></th>
+              <th>Mon</th>
+              <th>Tue</th>
+              <th>Wed</th>
+              <th>Thu</th>
+              <th>Fri</th>
+              <th style="display: none" class="sat">Sat</th>
+              <th style="display: none" class="sun">Sun</th>
+            </tr>
+          </thead>
+        </table>
 
-      <!-- 시간표 테이블 -->
-      <table class="timetable" style="height: 600px">
-        <tbody>
-          <tr>
-            <th>
-              <div class="times">
-                <div class="time">8시</div>
-                <div class="time">9시</div>
-                <div class="time">10시</div>
-                <div class="time">11시</div>
-                <div class="time">12시</div>
-                <div class="time">13시</div>
-                <div class="time">14시</div>
-                <div class="time">15시</div>
-                <div class="time">16시</div>
-                <div class="time">17시</div>
-                <div class="time">18시</div>
-                <div class="time">19시</div>
-                <div class="time">20시</div>
-                <div class="time">21시</div>
-                <div class="time">22시</div>
-                <div class="time">23시</div>
-              </div>
-            </th>
-            <!-- 요일별 td -->
-            <td>
-              <div class="day" data-day="1">
-                <!-- 월요일 시간표 내용이 여기에 들어감 -->
-                <div class="cols">
-                  <!-- <div
-                    class="subject color3"
-                    style="
-                      position: absolute;
-                      height: 47.42px;
-                      top: 426.78px;
-                      width: 113.31px;
-                    "
-                  >
-                    <h6>asefesafgasgfasefsasaefasegsadfsaefsafsaefsad</h6>
-                    <p>
-                      <em>asegsdfasfasefasefasefsaeef</em>
-                      <span>ageasfasefsef관</span>
-                    </p>
+        <!-- 시간표 테이블 -->
+        <table class="timetable" style="height: 600px">
+          <tbody>
+            <tr>
+              <th>
+                <div class="times">
+                  <div class="time">8시</div>
+                  <div class="time">9시</div>
+                  <div class="time">10시</div>
+                  <div class="time">11시</div>
+                  <div class="time">12시</div>
+                  <div class="time">13시</div>
+                  <div class="time">14시</div>
+                  <div class="time">15시</div>
+                  <div class="time">16시</div>
+                  <div class="time">17시</div>
+                  <div class="time">18시</div>
+                  <div class="time">19시</div>
+                  <div class="time">20시</div>
+                  <div class="time">21시</div>
+                  <div class="time">22시</div>
+                  <div class="time">23시</div>
+                </div>
+              </th>
+              <!-- 요일별 td -->
+              <td>
+                <div class="day" data-day="1">
+                  <!-- 월요일 시간표 내용이 여기에 들어감 -->
+                  <div class="cols">
+                    <!-- <div
+                      class="subject color3"
+                      style="
+                        position: absolute;
+                        height: 47.42px;
+                        top: 426.78px;
+                        width: 113.31px;
+                      "
+                    >
+                      <h6>asefesafgasgfasefsasaefasegsadfsaefsafsaefsad</h6>
+                      <p>
+                        <em>asegsdfasfasefasefasefsaeef</em>
+                        <span>ageasfasefsef관</span>
+                      </p>
 
-                    <img src="./image/bin.png" class="bin-icon" alt="bin" />
-                  </div> -->
+                      <img src="./image/bin.png" class="bin-icon" alt="bin" />
+                    </div> -->
+                  </div>
                 </div>
-              </div>
-              <div class="grids">
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-              </div>
-            </td>
-            <td>
-              <div class="day" data-day="2">
-                <!-- 화요일 시간표 내용이 여기에 들어감 -->
-                <div class="cols">
-                  <!-- <div
-                    class="subject color3"
-                    style="position: relative; height: 97.5px; top: 100px"
-                  ></div> -->
+                <div class="grids">
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
                 </div>
-              </div>
-              <div class="grids">
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-              </div>
-            </td>
-            <td>
-              <div class="day" data-day="3">
-                <!-- 수요일 시간표 내용이 여기에 들어감 -->
-                <div class="cols"></div>
-              </div>
-              <div class="grids">
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-              </div>
-            </td>
-            <td>
-              <div class="day" data-day="4">
-                <!-- 목요일 시간표 내용이 여기에 들어감 -->
-                <div class="cols"></div>
-              </div>
-              <div class="grids">
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-              </div>
-            </td>
-            <td>
-              <div class="day" data-day="5">
-                <!-- 금요일 시간표 내용이 여기에 들어감 -->
-                <div class="cols"></div>
-              </div>
-              <div class="grids">
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-              </div>
-            </td>
-            <td style="display: none">
-              <div class="day" data-day="6">
-                <!-- 토요일 시간표 내용이 여기에 들어감 -->
-                <div class="cols"></div>
-              </div>
-              <div class="grids">
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-              </div>
-            </td>
-            <td style="display: none">
-              <div class="day" data-day="7">
-                <!-- 일요일 시간표 내용이 여기에 들어감 -->
-                <div class="cols"></div>
-              </div>
-              <div class="grids">
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-                <div class="grid"></div>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div class="nontimes"></div>
-      <!-- 필터링 섹션 -->
-      <div class="filtering-section">
-        <div>
-          강의간 시간 간격
-          <div class="search-options">
-            <label><input type="checkbox"> 최소 1시간 간격</label>
-            <label><input type="checkbox"> 최소 2시간 간격</label>
+              </td>
+              <td>
+                <div class="day" data-day="2">
+                  <!-- 화요일 시간표 내용이 여기에 들어감 -->
+                  <div class="cols">
+                    <!-- <div
+                      class="subject color3"
+                      style="position: relative; height: 97.5px; top: 100px"
+                    ></div> -->
+                  </div>
+                </div>
+                <div class="grids">
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                </div>
+              </td>
+              <td>
+                <div class="day" data-day="3">
+                  <!-- 수요일 시간표 내용이 여기에 들어감 -->
+                  <div class="cols"></div>
+                </div>
+                <div class="grids">
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                </div>
+              </td>
+              <td>
+                <div class="day" data-day="4">
+                  <!-- 목요일 시간표 내용이 여기에 들어감 -->
+                  <div class="cols"></div>
+                </div>
+                <div class="grids">
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                </div>
+              </td>
+              <td>
+                <div class="day" data-day="5">
+                  <!-- 금요일 시간표 내용이 여기에 들어감 -->
+                  <div class="cols"></div>
+                </div>
+                <div class="grids">
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                </div>
+              </td>
+              <td style="display: none">
+                <div class="day" data-day="6">
+                  <!-- 토요일 시간표 내용이 여기에 들어감 -->
+                  <div class="cols"></div>
+                </div>
+                <div class="grids">
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                </div>
+              </td>
+              <td style="display: none">
+                <div class="day" data-day="7">
+                  <!-- 일요일 시간표 내용이 여기에 들어감 -->
+                  <div class="cols"></div>
+                </div>
+                <div class="grids">
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                  <div class="grid"></div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="nontimes"></div>
+        <!-- 필터링 섹션 -->
+        <div class="filtering-section">
+          <div>
+            강의간 시간 간격
+            <div class="search-options">
+              <lable>최소 시간 간격 지정(분)<input type="number" /></lable>
+              <lable>최대 시간 간격 지정(분)<input type="number" /></lable>
+            </div>
+          </div>
+          <div>
+            요일 공강
+            <div class="search-options">
+              <label><input type="checkbox" /> 월요일 공강</label>
+              <label><input type="checkbox" /> 화요일 공강</label>
+              <label><input type="checkbox" /> 수요일 공강</label>
+              <label><input type="checkbox" /> 목요일 공강</label>
+              <label><input type="checkbox" /> 금요일 공강</label>
+              <label><input type="checkbox" /> 토요일 공강</label>
+            </div>
+          </div>
+          <div>
+            연속강의
+            <div class="search-options">
+              <lable>연속강의 최소 시간 지정(분)<input type="number" /></lable>
+              <lable>연속강의 최대 시간 지정(분)<input type="number" /></lable>
+              <lable>연속강의 최소 개수<input type="number" /></lable>
+              <lable>연속강의 최대 개수<input type="number" /></lable>
+              <label
+                ><input type="checkbox" /> 연속강의 불가능 시간표 제외</label
+              >
+            </div>
+          </div>
+          <div>
+            등하교 시간
+            <div class="search-options">
+              <label>등교시간</label>
+              <input type="time" />
+              ~
+              <label>하교시간</label>
+              <input type="time" />
+            </div>
           </div>
         </div>
-        <div>
-          요일 공강
-          <div class="search-options">
-            <label><input type="checkbox"> 월요일 공강</label>
-            <label><input type="checkbox"> 금요일 공강</label>
-          </div>
+
+        <!-- 그룹 추가 버튼 -->
+        <button class="add-group">그룹 추가</button>
+
+        <!-- Subject 그룹 -->
+        <div class="subject-group">
+          <div class="group1">그룹 1</div>
         </div>
-        <div>
-          연속강의
-          <div class="search-options">
-            <label><input type="checkbox"> 2시간 연속강의</label>
-            <label><input type="checkbox"> 3시간 연속강의</label>
-          </div>
-        </div>
-        <div>
-          등하교 시간
-          <div class="search-options">
-            <label><input type="checkbox"> 오전 등교</label>
-            <label><input type="checkbox"> 오후 하교</label>
-          </div>
+        <div class="form-group full-width">
+          <button type="button">시간표 생성</button>
         </div>
       </div>
-
-      <!-- 그룹 추가 버튼 -->
-      <button class="add-group">그룹 추가</button>
-
-      <!-- Subject 그룹 -->
-      <div class="subject-group">
-        <div class="group1">그룹 1</div>
-      </div>
-    </div>
-    
+    </form>
   </body>
 </html>
