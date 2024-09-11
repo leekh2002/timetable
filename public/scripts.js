@@ -1,6 +1,7 @@
 const category = document.getElementById('courseCategory');
 const department = document.getElementById('departments');
 let width_value = '113.31px';
+let group_count = 1;
 
 document.addEventListener('DOMContentLoaded', function () {});
 
@@ -94,16 +95,34 @@ document.getElementById('searchForm').addEventListener('submit', (event) => {
         addButton.textContent = '+ 추가';
         newRow.appendChild(addButton);
         const param_row = newRow;
-        newRow.addEventListener('mouseenter', function (event) {
+
+        newRow.addEventListener('mouseenter', (event) => {
           enterEvent(event);
         });
-        newRow.addEventListener('mouseleave', function (event) {
+
+        newRow.addEventListener('mouseleave', (event) => {
           leaveEvent(event);
+        });
+
+        newRow.addEventListener('dragstart', (event) => {
+          const target = event.target.parentElement.querySelectorAll('td');
+          const lect_info = {
+            name: target[4].textContent,
+            prof_name: target[7].textContent,
+            sid: target[2].textContent,
+            class: target[3].textContent,
+            time: target[8].textContent,
+          };
+          event.dataTransfer.setData(
+            'application/json',
+            JSON.stringify(lect_info)
+          );
         });
 
         addButton.addEventListener('click', (event) => {
           clickEvent(param_row);
         });
+
         tbody.appendChild(newRow);
       });
       adjustTableWidth();
@@ -239,7 +258,7 @@ async function clickEvent(row) {
               width_value = '113.31px';
               for (let i = 0; i < class_num2; i++) {
                 const div = document.querySelectorAll('.col' + `${i}`);
-                console.log('div: ', element,' ',i);
+                console.log('div: ', element, ' ', i);
                 if (div == null) continue;
                 div.forEach((element) => {
                   element.style.width = width_value;
@@ -262,7 +281,6 @@ async function clickEvent(row) {
         element.appendChild(h5);
         element.appendChild(p);
         element.appendChild(img);
-
       });
     sid_set.push(td[2].textContent);
   }
@@ -273,6 +291,7 @@ function removeElements(elements) {
     element.remove();
   });
 }
+
 async function displayTime(tdElements, color, opacity, op) {
   const name = tdElements[4].textContent;
   const prof_name = tdElements[7].textContent;
@@ -333,7 +352,7 @@ async function displayTime(tdElements, color, opacity, op) {
     });
 }
 
-document.querySelector('.goto-generator').addEventListener('click', function() {
+document.querySelector('.goto-generator').addEventListener('click', (event) => {
   document.querySelector('.days-table').style.display = 'none';
   document.querySelector('.timetable').style.display = 'none';
   document.querySelector('.nontimes').style.display = 'none';
@@ -342,5 +361,194 @@ document.querySelector('.goto-generator').addEventListener('click', function() {
   document.querySelector('.filtering-section').style.display = 'grid';
   document.querySelector('.add-group').style.display = 'block';
   document.querySelector('.subject-group').style.display = 'block';
+  document.querySelector('#filterForm').style.display = 'block';
   // document.querySelector('.goto-generator').style.display='none';
+});
+
+document.querySelector('.back-icon').addEventListener('click', (event) => {
+  console.log('asfes');
+  document.querySelector('#filterForm').style.display = 'none';
+  document.querySelector('.days-table').style.display = 'table';
+  document.querySelector('.timetable').style.display = 'table';
+  document.querySelector('.nontimes').style.display = 'block';
+});
+
+document.querySelector('.add-group').addEventListener('click', (event) => {
+  event.preventDefault();
+
+  const ph = document.createElement('div');
+  const div = document.querySelector('.subject-group');
+  const group = document.createElement('div');
+  const span = document.createElement('span');
+  const img = new Image();
+
+  ph.className += 'placeholder';
+  ph.textContent = '드래그앤 드랍으로 강의를 추가하세요';
+  span.textContent = `그룹 ${++group_count} `;
+  span.style.fontSize = '16px';
+
+  group.className += 'group';
+  group.id = `group${group_count}`;
+
+  img.src = './image/bin.png';
+  img.alt = 'bin';
+  img.style.width = '13px';
+  img.style.height = '13px';
+
+  img.addEventListener('click', (event) => {
+    const pardiv = img.parentElement;
+    for (let i = Number(pardiv.id.substring(5)) + 1; i <= group_count; i++) {
+      const group = document.getElementById(`group${i}`);
+      group.id = `group${i - 1}`;
+      group.querySelector('span').textContent = `그룹 ${i - 1} `;
+    }
+    group_count--;
+    document.getElementById(pardiv.remove());
+  });
+
+  group.append(ph);
+  group.appendChild(span);
+  group.appendChild(img);
+
+  group.addEventListener('dragover', (event) => {
+    dragoverFun(event);
+  });
+  group.addEventListener('drop', (event) => {
+    dropFun(event);
+  });
+  div.appendChild(group);
+});
+
+document.getElementById('group1').addEventListener('dragover', (event) => {
+  dragoverFun(event);
+});
+document.getElementById('group1').addEventListener('drop', (event) => {
+  dropFun(event);
+});
+
+function dragoverFun(event) {
+  event.preventDefault();
+}
+
+function dropFun(event) {
+  event.preventDefault();
+  const lectInfoJSON = event.dataTransfer.getData('application/json');
+  const lect_info = JSON.parse(lectInfoJSON);
+
+  let group = event.target;
+  while (!group.classList.contains('group')) {
+    group = group.parentElement;
+  }
+
+  const div = document.createElement('div');
+  const span_name = document.createElement('span');
+  const span_sid = document.createElement('span');
+  const span_time = document.createElement('span');
+  const span_prof = document.createElement('span');
+  const img = new Image();
+
+  span_name.textContent = lect_info.name;
+  span_sid.textContent = lect_info.sid + '-' + lect_info.class;
+  span_time.textContent = lect_info.time;
+  span_prof.textContent = lect_info.prof_name;
+  img.src = './image/cancle.png';
+  img.alt = 'cancle';
+  img.style.width = '9px';
+  img.style.height = '9px';
+  let flag = 0;
+
+  group.querySelectorAll('div').forEach((element) => {
+    if (element.className == 'placeholder') return;
+    if (
+      element.querySelectorAll('span')[1].textContent == span_sid.textContent
+    ) {
+      flag = 1;
+      return;
+    }
+  });
+
+  if (flag == 1) {
+    alert('이미 그룹에 해당 강의가 포함되어 있습니다.');
+    return;
+  }
+  group.querySelector('.placeholder').style.display = 'none';
+
+  img.addEventListener('click', (event) => {
+    if (
+      event.target.parentElement.parentElement.querySelectorAll('div').length ==
+      2
+    )
+      event.target.parentElement.parentElement.querySelector(
+        '.placeholder'
+      ).style.display = 'block';
+    event.target.parentElement.remove();
+  });
+
+  div.appendChild(span_name);
+  div.appendChild(span_sid);
+  div.appendChild(span_prof);
+  div.appendChild(span_time);
+  div.appendChild(img);
+  group.appendChild(div);
+}
+
+document.getElementById('filterForm').addEventListener('submit', (event) => {
+  event.preventDefault();
+  const freeday = [];
+  document.getElementsByName('freeday').forEach((element) => {
+    console.log(element.checked);
+    if (element.checked) {
+      freeday.push(element.value);
+    }
+  });
+
+  let mingap = document.getElementsByName('mingap')[0].value == '';
+  if (mingap == '') mingap = 0;
+
+  let maxgap = document.getElementsByName('maxgap')[0].value;
+  if (maxgap == '') maxgap = 100;
+
+  let gotime = document.getElementsByName('gotime')[0].value;
+  if (gotime == '') gotime = '0:0';
+
+  let leavetime = document.getElementsByName('leavetime')[0].value;
+  if (leavetime == '') leavetime = '23:59';
+
+  let btbMintime = document.getElementsByName('btbMintime')[0].value;
+  if (btbMintime == '') btbMintime = 0;
+
+  let btbMaxtime = document.getElementsByName('btbMaxtime')[0].value;
+  if (btbMaxtime == '') btbMaxtime = '2000';
+
+  let btbMincount = document.getElementsByName('btbMincount')[0].value;
+  if (btbMincount == '') btbMincount = 0;
+
+  let btbMaxcount = document.getElementsByName('btbMaxcount')[0].value;
+  if (btbMaxcount == '') btbMaxcount = 100;
+
+  let group_query = [];
+  for (let i = 1; i <= group_count; i++) {
+    let subjectArr = [];
+    document
+      .getElementById(`group${i}`)
+      .querySelectorAll('div')
+      .forEach((element) => {
+        if (element.classList.contains('placeholder')) return;
+        subjectArr.push(element.querySelectorAll('span')[1].textContent);
+      });
+    group_query.push(subjectArr);
+  }
+  const freedays = freeday
+    .map((item) => `freeday=${encodeURIComponent(item)}`)
+    .join('&');
+  const groups=group_query.map((row, rowIndex)=>
+    row.map((value, colIndex)=>`group[${rowIndex}][${colIndex}]=${value}`).join('&')
+  ).join('&');
+  const queryString = `${freedays}&mingap=${mingap}&maxgap=${maxgap}&gotime=${gotime}&leavetime=${leavetime}&btbMintime=${btbMintime}&btbMaxtime=${btbMaxtime}&btbMincount=${btbMincount}&bibMaxcount=${btbMaxcount}&${groups}`;
+
+  fetch(`/process/filter?${queryString}`, {
+    method: 'GET',
+  })
+    .then((res) => res.json)
+    .then((data) => {});
 });

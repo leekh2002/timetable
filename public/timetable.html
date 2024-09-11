@@ -91,7 +91,6 @@
     </div>
 
     <!-- 시간표 테이블 공간 -->
-    <form action="/process/filter" method="get" id="filterForm">
       <div class="timetable-list" id="timetableList">
         <button class="goto-generator">시간표 생성기 바로가기</button>
         <button class="close-timetable">닫기</button>
@@ -331,45 +330,48 @@
         </table>
         <div class="nontimes"></div>
         <!-- 필터링 섹션 -->
+        
+      <form action="/process/filter" method="get" id="filterForm" style="display: none;">
+        <div style="position: absolute; top: 20px; left: 10px;">
+          <img src="./image/back.png" class="back-icon" alt="back" style="width: 30px; height: 30 px;">
+        </div>
         <div class="filtering-section">
           <div>
             강의간 시간 간격
             <div class="search-options">
-              <lable>최소 시간 간격 지정(분)<input type="number" /></lable>
-              <lable>최대 시간 간격 지정(분)<input type="number" /></lable>
+              <lable>최소 시간 간격 지정(분)<input type="number" name="mingap"/></lable>
+              <lable>최대 시간 간격 지정(분)<input type="number" name="maxgap"/></lable>
             </div>
           </div>
           <div>
             요일 공강
             <div class="search-options">
-              <label><input type="checkbox" /> 월요일 공강</label>
-              <label><input type="checkbox" /> 화요일 공강</label>
-              <label><input type="checkbox" /> 수요일 공강</label>
-              <label><input type="checkbox" /> 목요일 공강</label>
-              <label><input type="checkbox" /> 금요일 공강</label>
-              <label><input type="checkbox" /> 토요일 공강</label>
+              <label><input type="checkbox" name="freeday" value="월"/> 월요일 공강</label>
+              <label><input type="checkbox" name="freeday" value="화"/> 화요일 공강</label>
+              <label><input type="checkbox" name="freeday" value="수"/> 수요일 공강</label>
+              <label><input type="checkbox" name="freeday" value="목"/> 목요일 공강</label>
+              <label><input type="checkbox" name="freeday" value="금"/> 금요일 공강</label>
+              <label><input type="checkbox" name="freeday" value="토"/> 토요일 공강</label>
             </div>
           </div>
           <div>
             연속강의
             <div class="search-options">
-              <lable>연속강의 최소 시간 지정(분)<input type="number" /></lable>
-              <lable>연속강의 최대 시간 지정(분)<input type="number" /></lable>
-              <lable>연속강의 최소 개수<input type="number" /></lable>
-              <lable>연속강의 최대 개수<input type="number" /></lable>
-              <label
-                ><input type="checkbox" /> 연속강의 불가능 시간표 제외</label
-              >
+              <lable>연속강의 최소 시간 지정(분)<input type="number" name="btbMintime"/></lable>
+              <lable>연속강의 최대 시간 지정(분)<input type="number" name="btbMaxtime"/></lable>
+              <lable>연속강의 최소 개수<input type="number" name="btbMincount"/></lable>
+              <lable>연속강의 최대 개수<input type="number" name="btbMaxcount"/></lable>
+              <label><input type="checkbox" name="btbecpt"/> 연속강의 불가능 시간표 제외</label>
             </div>
           </div>
           <div>
             등하교 시간
             <div class="search-options">
               <label>등교시간</label>
-              <input type="time" />
+              <input type="time" name="gotime"/>
               ~
               <label>하교시간</label>
-              <input type="time" />
+              <input type="time" name="leavetime"/>
             </div>
           </div>
         </div>
@@ -379,12 +381,16 @@
 
         <!-- Subject 그룹 -->
         <div class="subject-group">
-          <div class="group1">그룹 1</div>
+          <div class="group" id="group1"><span style="font-size: 16px;">그룹 1</span>
+            <div class="placeholder">드래그앤 드랍으로 강의를 추가하세요</div>
+          </div>
+          
         </div>
         <div class="form-group full-width">
-          <button type="button">시간표 생성</button>
+          <button type="submit" id="createTimetable">시간표 생성</button>
         </div>
       </div>
     </form>
   </body>
 </html>
+

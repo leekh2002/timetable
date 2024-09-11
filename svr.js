@@ -205,7 +205,8 @@ app.get(`/process/getTime`, (req, res) => {
 });
 
 app.get('/process/filter',(req, res)=>{
-  
+  const freedays=req.query
+  console.log(freedays);
 })
 
 app.listen(3000, () => {
