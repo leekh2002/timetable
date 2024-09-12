@@ -312,61 +312,61 @@ div.subject {
 .results-section .output_result tbody {
   width: 100%;
   border-collapse: collapse;
-  max-height: 400px; /* 조회 결과 테이블에 대한 최대 높이를 설정 */
-  overflow-y: auto; /* 세로 스크롤 추가 */
-  display: block; /* 스크롤 동작을 위해 display 속성을 block으로 설정 */
+  max-height: 400px; 
+  overflow-y: auto; 
+  display: block;
 }
 
 .results-section .output_result thead,
 .results-section .output_result tbody tr {
-  display: table; /* 테이블 형태 유지 */
-  width: 100%; /* 테이블 너비 설정 */
-  table-layout: fixed; /* 테이블 레이아웃 고정 */
+  display: table; 
+  width: 100%; 
+  table-layout: fixed; 
 }
 
 .results-section .output_result thead {
-  display: table; /* thead는 고정 */
+  display: table;
   width: 100%;
   table-layout: fixed;
 }
 
 .results-section .output_result tbody {
-  display: block; /* tbody는 스크롤 가능하도록 block으로 설정 */
-  max-height: 400px; /* 스크롤이 생길 최대 높이 */
-  overflow-y: auto; /* 세로 스크롤 추가 */
-  table-layout: fixed; /* 가로 스크롤 제거 */
-  width: 100%; /* 테이블 너비 설정 */
+  display: block; 
+  max-height: 400px; 
+  overflow-y: auto; 
+  table-layout: fixed; 
+  width: 100%; 
   overflow-x: hidden;
   padding-right: 12px;
 }
 
 .results-section .output_result th,
 .results-section .output_result td {
-  padding: 8px; /* 셀 내 패딩 */
-  text-align: left; /* 셀 안의 텍스트 왼쪽 정렬 */
-  border: 1px solid #ddd; /* 테두리 */
+  padding: 8px; 
+  text-align: left; 
+  border: 1px solid #ddd;
   width: 10%;
 }
 
 .results-section .output_result tbody tr {
-  display: table; /* tbody 내 각 행을 테이블처럼 표시 */
-  width: 100%; /* 각 행의 너비를 100%로 설정 */
-  table-layout: fixed; /* 테이블 레이아웃 고정 */
+  display: table; 
+  width: 100%; 
+  table-layout: fixed; 
 }
 
 .results-section .output_result {
-  width: 100%; /* 테이블 전체 너비를 100%로 설정 */
-  border-collapse: collapse; /* 테이블 테두리 고정 */
+  width: 100%; 
+  border-collapse: collapse; 
   table-layout: fixed;
 }
 
 .results-section .output_result::-webkit-scrollbar {
-  width: 12px; /* 적당한 스크롤바 너비 */
+  width: 12px; /
 }
 
 .output_result tbody tr {
   transition: background-color 0.3s ease;
-  position: relative; /* To position the button inside the row */
+  position: relative; 
 }
 
 .output_result tbody tr:hover {
@@ -536,3 +536,4 @@ p {
   pointer-events: none; /* 드래그가 placeholder 위에서 발생하지 않도록 */
   user-select: none; /* 텍스트 선택 방지 */
 }
+

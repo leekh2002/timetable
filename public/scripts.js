@@ -502,7 +502,7 @@ document.getElementById('filterForm').addEventListener('submit', (event) => {
     }
   });
 
-  let mingap = document.getElementsByName('mingap')[0].value == '';
+  let mingap = document.getElementsByName('mingap')[0].value;
   if (mingap == '') mingap = 0;
 
   let maxgap = document.getElementsByName('maxgap')[0].value;
@@ -525,7 +525,7 @@ document.getElementById('filterForm').addEventListener('submit', (event) => {
 
   let btbMaxcount = document.getElementsByName('btbMaxcount')[0].value;
   if (btbMaxcount == '') btbMaxcount = 100;
-
+  let btbecpt=document.getElementsByName('btbecpt')[0].checked;
   let group_query = [];
   for (let i = 1; i <= group_count; i++) {
     let subjectArr = [];
@@ -544,7 +544,7 @@ document.getElementById('filterForm').addEventListener('submit', (event) => {
   const groups=group_query.map((row, rowIndex)=>
     row.map((value, colIndex)=>`group[${rowIndex}][${colIndex}]=${value}`).join('&')
   ).join('&');
-  const queryString = `${freedays}&mingap=${mingap}&maxgap=${maxgap}&gotime=${gotime}&leavetime=${leavetime}&btbMintime=${btbMintime}&btbMaxtime=${btbMaxtime}&btbMincount=${btbMincount}&bibMaxcount=${btbMaxcount}&${groups}`;
+  const queryString = `${freedays}&mingap=${mingap}&maxgap=${maxgap}&gotime=${gotime}&leavetime=${leavetime}&btbMintime=${btbMintime}&btbMaxtime=${btbMaxtime}&btbMincount=${btbMincount}&bibMaxcount=${btbMaxcount}&btbecpt=${btbecpt}&${groups}`;
 
   fetch(`/process/filter?${queryString}`, {
     method: 'GET',

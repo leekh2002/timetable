@@ -3,6 +3,7 @@ const mysql = require('mysql');
 const path = require('path');
 const static = require('serve-static');
 const dbconfig = require('./config/dbconfig.json');
+const { time } = require('console');
 
 const pool = mysql.createPool({
   connectionLimit: 10,
@@ -167,11 +168,11 @@ app.get(`/process/getTime`, (req, res) => {
   const sid = req.query.sid;
   const lect_class = req.query.class;
 
-  pool.getConnection((err,conn)=>{
+  pool.getConnection((err, conn) => {
     const exec = conn.query(
       `select day, time, place from time_info where sid=? and class=?`,
-      [sid,lect_class],
-      (err, rows)=>{
+      [sid, lect_class],
+      (err, rows) => {
         conn.release();
         console.log('실행된 SQL: ' + exec.sql);
 
@@ -187,15 +188,139 @@ app.get(`/process/getTime`, (req, res) => {
         }
       }
     );
-  })
+  });
 });
 
-app.get('/process/filter',(req, res)=>{
-  const freedays=req.query
-  console.log(freedays);
-})
+app.get('/process/filter', async (req, res) => {
+  console.log(req.query);
+
+  const freedays = req.query.freeday;
+  const mingap = req.query.mingap;
+  const maxgap = req.query.maxgap;
+  const gotime =
+    Number(req.query.gotime.split(':')[0]) * 60 +
+    Number(req.query.gotime.split(':')[1]);
+  const leavetime =
+    Number(req.query.leavetime.split(':')[0]) * 60 +
+    Number(req.query.leavetime.split(':')[1]);
+  const btbMintime = Number(req.query.btbMintime);
+  const btbMaxtime = Number(req.query.btbMaxtime);
+  const btbMincount = req.query.btbMincount;
+  const btbMaxcount = req.query.btbMaxcount;
+  const btbecpt = req.query.btbecpt;
+  const group = req.query.group;
+  const inserted_subject_list = [];
+  let timetables = [];
+
+  async function selectTimetables(group, group_id) {
+    for (const element of group[group_id]) {
+      //inserted_subject_list.push(element);
+      let times = [];
+      const queryDatabase = (element) => {
+        return new Promise((resolve, reject) => {
+          pool.getConnection((err, conn) => {
+            if (err) {
+              reject(err);
+            }
+            const exec = conn.query(
+              `select day, time, place from time_info where sid=? and class=?`,
+              [element.substring(0, 9), element.substring(10)],
+              (err, rows) => {
+                conn.release();
+                //console.log('실행된 SQL: ' + exec.sql);
+
+                if (err) {
+                  reject(err);
+                } else {
+                  resolve(rows);
+                }
+              }
+            );
+          });
+        });
+      };
+
+      try {
+        const day = await queryDatabase(element);
+        times.push(day);
+        times = times[0];
+        inserted_subject_list.push({
+          sid: element,
+          times: times
+        });
+
+        let current_timetable=[[],[],[],[],[],[],[]];
+        const index_of_day = {};
+        index_of_day['월'] = 0;
+        index_of_day['화'] = 1;
+        index_of_day['수'] = 2;
+        index_of_day['목'] = 3;
+        index_of_day['금'] = 4;
+        index_of_day['토'] = 5;
+        index_of_day['일'] = 6;
+
+        for(let j = 0; j < inserted_subject_list.length - 1; j++){
+          inserted_subject_list[j].times.forEach(element => {
+            current_timetable[index_of_day[element.day]].push({
+              sid: inserted_subject_list[j].sid,
+              time_and_place: element
+            });
+          });
+        }
+
+        for (let i = 0; i < times.length; i++) {
+          const begin =
+            Number(times[i].time.split('~')[0].split(':')[0]) * 60 +
+            Number(times[i].time.split('~')[0].split(':')[1]);
+          const end =
+            Number(times[i].time.split('~')[1].split(':')[0]) * 60 +
+            Number(times[i].time.split('~')[1].split(':')[1]);
+
+          if (
+            (freedays !== undefined && freedays.indexOf(times[i].day) >= 0) ||
+            begin < gotime ||
+            end > leavetime
+          ) {
+            console.log(inserted_subject_list);
+            console.log('요일공강 조건 안맞음');
+            inserted_subject_list.pop();
+            return;
+          }
+
+          let flag=0
+
+          //현재시간표에서 times[i].day요일의 요소들 탐색
+          current_timetable[index_of_day[times[i].day]].forEach(element=>{
+            const element_begin=element.time_and_place.time.split('~')[0].split[':'][0]*60+element.time_and_place.time.split('~')[0].split[':'][1];
+            const element_end=element.time_and_place.time.split('~')[1].split[':'][0]*60+element.time_and_place.time.split('~')[1].split[':'][1];
+
+            //추가하려는 시간이 현재 등록되어 있는 시간과 겹칠때
+            if((begin<=element_begin && end>element_begin) || (begin>=element_begin && begin<element_end))
+            {
+              flag=1;
+              return;
+            }
+
+            //연강, 강의간 시간간격 고려하는 코드 작성
+            
+          })
+         
+        }
+
+        if (group.length - 1 != group_id) {
+          await selectTimetables(group, group_id + 1);
+        }
+        inserted_subject_list.pop();
+      } catch (err) {
+        console.log('SQL 실행 시 오류 발생');
+        console.dir(err);
+      }
+    }
+  }
+
+  await selectTimetables(group, 0);
+});
 
 app.listen(3000, () => {
   console.log('Listening on port 3000');
 });
-
