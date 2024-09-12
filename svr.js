@@ -70,7 +70,6 @@ app.get('/categoryanddeptfromdb', (req, res) => {
       (err, rows) => {
         conn.release();
         console.log('실행된 SQL: ' + exec.sql);
-        console.log(rows[8]);
         if (err) {
           console.log('SQL 실행시 오류발생');
           console.dir(err);
@@ -87,11 +86,6 @@ app.get('/categoryanddeptfromdb', (req, res) => {
 });
 
 app.get('/process/search', (req, res) => {
-  console.log('inst_method:', req.query.inst_method);
-  console.log('course_class:', req.query.course_class);
-  console.log('prof_name:', req.query.prof_name);
-  console.log('major:', req.query.major);
-  console.log('name:', req.query.name);
   const inst_method = req.query.inst_method;
   const course_class = req.query.course_class;
   const prof_name = req.query.prof_name;
@@ -113,7 +107,6 @@ app.get('/process/search', (req, res) => {
       ? 'inst_method=' + '"원격수업"'
       : 'inst_method is null');
 
-  console.log('where: ', where);
   let params = [];
   if (course_class != '전체') params.push(course_class);
 
@@ -124,19 +117,12 @@ app.get('/process/search', (req, res) => {
   if (major != '' && major != '전체') params.push(major + '%');
 
   if (name != '') {
-    console.log(
-      'name.charAt(4): ',
-      name.charAt(4),
-      'name.charAt(9)',
-      name.charAt(9)
-    );
     if (name.charAt(4) == '-' && name.charAt(9) == '-') {
       params.push(name.substring(0, 9));
       params.push(name.substring(10));
     } else params.push('%' + name + '%');
   }
 
-  console.log('params: ', params);
   pool.getConnection((err, conn) => {
     if (err) {
       conn.release();
