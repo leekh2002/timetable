@@ -203,9 +203,7 @@ app.get('/process/filter', async (req, res) => {
   const leavetime =
     Number(req.query.leavetime.split(':')[0]) * 60 +
     Number(req.query.leavetime.split(':')[1]);
-  const btbMintime = Number(req.query.btbMintime);
-  const btbMaxtime = Number(req.query.btbMaxtime);
-  const btbMincount = req.query.btbMincount;
+  const btbMaxtime = req.query.btbMaxtime;
   const btbMaxcount = req.query.btbMaxcount;
   const btbecpt = req.query.btbecpt;
   const group = req.query.group;
@@ -227,7 +225,6 @@ app.get('/process/filter', async (req, res) => {
               [element.substring(0, 9), element.substring(10)],
               (err, rows) => {
                 conn.release();
-                //console.log('실행된 SQL: ' + exec.sql);
 
                 if (err) {
                   reject(err);
@@ -246,10 +243,10 @@ app.get('/process/filter', async (req, res) => {
         times = times[0];
         inserted_subject_list.push({
           sid: element,
-          times: times
+          times: times,
         });
 
-        let current_timetable=[[],[],[],[],[],[],[]];
+        let current_timetable = [[], [], [], [], [], [], []];
         const index_of_day = {};
         index_of_day['월'] = 0;
         index_of_day['화'] = 1;
@@ -258,57 +255,234 @@ app.get('/process/filter', async (req, res) => {
         index_of_day['금'] = 4;
         index_of_day['토'] = 5;
         index_of_day['일'] = 6;
+        let j;
 
-        for(let j = 0; j < inserted_subject_list.length - 1; j++){
-          inserted_subject_list[j].times.forEach(element => {
+        //현재 삽입된 과목리스트를 시간표에 추가, 과목코드가 같은과목이 있는지 여부 파악
+        for (j = 0; j < inserted_subject_list.length - 1; j++) {
+          inserted_subject_list[j].times.forEach((element) => {
             current_timetable[index_of_day[element.day]].push({
               sid: inserted_subject_list[j].sid,
-              time_and_place: element
+              time_and_place: element,
             });
           });
+          if (
+            inserted_subject_list[j].sid.substring(0, 9) ==
+            element.substring(0, 9)
+          ) {
+            break;
+          }
         }
+        if (j < inserted_subject_list.length - 1) {
+          inserted_subject_list.pop();
+          continue;
+        }
+        let i;
 
-        for (let i = 0; i < times.length; i++) {
+        //현재 과목 시간별 탐색
+        for (i = 0; i < times.length; i++) {
           const begin =
             Number(times[i].time.split('~')[0].split(':')[0]) * 60 +
             Number(times[i].time.split('~')[0].split(':')[1]);
           const end =
             Number(times[i].time.split('~')[1].split(':')[0]) * 60 +
             Number(times[i].time.split('~')[1].split(':')[1]);
-
           if (
             (freedays !== undefined && freedays.indexOf(times[i].day) >= 0) ||
             begin < gotime ||
             end > leavetime
           ) {
-            console.log(inserted_subject_list);
-            console.log('요일공강 조건 안맞음');
-            inserted_subject_list.pop();
-            return;
+            break;
           }
 
-          let flag=0
+          let flag = 0;
 
           //현재시간표에서 times[i].day요일의 요소들 탐색
-          current_timetable[index_of_day[times[i].day]].forEach(element=>{
-            const element_begin=element.time_and_place.time.split('~')[0].split[':'][0]*60+element.time_and_place.time.split('~')[0].split[':'][1];
-            const element_end=element.time_and_place.time.split('~')[1].split[':'][0]*60+element.time_and_place.time.split('~')[1].split[':'][1];
+          await current_timetable[index_of_day[times[i].day]].forEach(
+            async (element) => {
+              const element_begin =
+                Number(
+                  element.time_and_place.time.split('~')[0].split(':')[0]
+                ) *
+                  60 +
+                Number(element.time_and_place.time.split('~')[0].split(':')[1]);
+              const element_end =
+                Number(
+                  element.time_and_place.time.split('~')[1].split(':')[0]
+                ) *
+                  60 +
+                Number(element.time_and_place.time.split('~')[1].split(':')[1]);
 
-            //추가하려는 시간이 현재 등록되어 있는 시간과 겹칠때
-            if((begin<=element_begin && end>element_begin) || (begin>=element_begin && begin<element_end))
-            {
-              flag=1;
-              return;
+              //추가하려는 시간이 현재 등록되어 있는 시간과 겹칠때
+              if (
+                (begin <= element_begin && end > element_begin) ||
+                (begin >= element_begin && begin < element_end)
+              ) {
+                flag = 1;
+                return;
+              }
+
+              //강의간 시간간격 체크
+              if (
+                (begin <= element_begin &&
+                  (element_begin - end < mingap ||
+                    element_begin - end > maxgap)) ||
+                (begin > element_begin &&
+                  (begin - element_end < mingap ||
+                    begin - element_end > maxgap))
+              ) {
+                flag = 1;
+                return;
+              }
+
+              //연강 체크
+              if (begin == element_end || end == element_begin) {
+                //이전 연강
+                let temp_begin = begin;
+                let temp_end = end;
+                let count = 1,
+                  time = end - begin;
+                while (true) {
+                  let flag = 0;
+                  current_timetable[index_of_day[times[i].day]].forEach(
+                    (element) => {
+                      const element_begin =
+                        Number(
+                          element.time_and_place.time
+                            .split('~')[0]
+                            .split(':')[0]
+                        ) *
+                          60 +
+                        Number(
+                          element.time_and_place.time
+                            .split('~')[0]
+                            .split(':')[1]
+                        );
+                      const element_end =
+                        Number(
+                          element.time_and_place.time
+                            .split('~')[1]
+                            .split(':')[0]
+                        ) *
+                          60 +
+                        Number(
+                          element.time_and_place.time
+                            .split('~')[1]
+                            .split(':')[1]
+                        );
+                      if (temp_begin == element_end) {
+                        count++;
+                        time += element_end - element_begin;
+                        temp_begin = element_begin;
+                        flag = 1;
+                        return;
+                      }
+                    }
+                  );
+                  if (flag == 0) break;
+                }
+
+                //이후 연강
+                while (true) {
+                  let flag = 0;
+                  current_timetable[index_of_day[times[i].day]].forEach(
+                    (element) => {
+                      const element_begin =
+                        Number(
+                          element.time_and_place.time
+                            .split('~')[0]
+                            .split(':')[0]
+                        ) *
+                          60 +
+                        Number(
+                          element.time_and_place.time
+                            .split('~')[0]
+                            .split(':')[1]
+                        );
+                      const element_end =
+                        Number(
+                          element.time_and_place.time
+                            .split('~')[1]
+                            .split(':')[0]
+                        ) *
+                          60 +
+                        Number(
+                          element.time_and_place.time
+                            .split('~')[1]
+                            .split(':')[1]
+                        );
+                      if (temp_end == element_begin) {
+                        count++;
+                        time += element_end - element_begin;
+                        temp_end = element_end;
+                        flag = 1;
+                        return;
+                      }
+                    }
+                  );
+                  if (flag == 0) break;
+                }
+                if (count > btbMaxcount || time > btbMaxtime) {
+                  flag = 1;
+                  return;
+                }
+
+                //연강 가능여부
+                if (btbecpt == 'true') {
+                  const element_place = element.time_and_place.place;
+                  const queryDatabase = (place1, place2) => {
+                    return new Promise((resolve, reject) => {
+                      pool.getConnection((err, conn) => {
+                        if (err) reject(err);
+                        const exec = conn.query(
+                          `select time from (select bid from lectroom where name=?) as a,
+                                          (select bid from lectroom where name=?) as b,
+                                          distance c
+                                    where c.start=a.bid and c.end=b.bid`,
+                          [element_place, place2],
+                          (err, rows) => {
+                            conn.release();
+                            console.log('실행된 SQL: ' + exec.sql);
+
+                            resolve(rows[0].time);
+                          }
+                        );
+                      });
+                    });
+                  };
+
+                  try {
+                    const time = await queryDatabase(
+                      element_place,
+                      times[i].place
+                    );
+                    console.log(time);
+                    if (time > 600) {
+                      flag = 1;
+                      return;
+                    }
+                  } catch (err) {}
+                }
+              }
             }
-
-            //연강, 강의간 시간간격 고려하는 코드 작성
-            
-          })
-         
+          );
+          if (flag == 1) {
+            break;
+          }
+        }
+        if (i < times.length) {
+          inserted_subject_list.pop();
+          continue;
         }
 
         if (group.length - 1 != group_id) {
           await selectTimetables(group, group_id + 1);
+        } else {
+          if (inserted_subject_list.length == group.length) {
+            timetables.push([]);
+            inserted_subject_list.forEach((element) => {
+              timetables[timetables.length - 1].push(element);
+            });
+          }
         }
         inserted_subject_list.pop();
       } catch (err) {
@@ -319,6 +493,7 @@ app.get('/process/filter', async (req, res) => {
   }
 
   await selectTimetables(group, 0);
+  console.log('timetables23231: ', timetables);
 });
 
 app.listen(3000, () => {
