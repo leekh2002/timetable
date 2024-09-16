@@ -27,7 +27,6 @@ document
 
     const timetableList = document.getElementById('timetableList');
     const container = document.querySelector('.container');
-
     timetableList.classList.toggle('show');
 
     // 시간표가 열릴 때와 닫힐 때 container의 위치를 조정
@@ -356,7 +355,7 @@ document.querySelector('.goto-generator').addEventListener('click', (event) => {
   document.querySelector('.days-table').style.display = 'none';
   document.querySelector('.timetable').style.display = 'none';
   document.querySelector('.nontimes').style.display = 'none';
-
+  console.log('asefasegasefsef');
   // 'filtering-section', 'add-group', 'subject-group' 표시
   document.querySelector('.filtering-section').style.display = 'grid';
   document.querySelector('.add-group').style.display = 'block';
@@ -519,7 +518,7 @@ document.getElementById('filterForm').addEventListener('submit', (event) => {
 
   let btbMaxcount = document.getElementsByName('btbMaxcount')[0].value;
   if (btbMaxcount == '') btbMaxcount = 100;
-  let btbecpt=document.getElementsByName('btbecpt')[0].checked;
+  let btbecpt = document.getElementsByName('btbecpt')[0].checked;
   let group_query = [];
   for (let i = 1; i <= group_count; i++) {
     let subjectArr = [];
@@ -535,14 +534,104 @@ document.getElementById('filterForm').addEventListener('submit', (event) => {
   const freedays = freeday
     .map((item) => `freeday=${encodeURIComponent(item)}`)
     .join('&');
-  const groups=group_query.map((row, rowIndex)=>
-    row.map((value, colIndex)=>`group[${rowIndex}][${colIndex}]=${value}`).join('&')
-  ).join('&');
+  const groups = group_query
+    .map((row, rowIndex) =>
+      row
+        .map((value, colIndex) => `group[${rowIndex}][${colIndex}]=${value}`)
+        .join('&')
+    )
+    .join('&');
   const queryString = `${freedays}&mingap=${mingap}&maxgap=${maxgap}&gotime=${gotime}&leavetime=${leavetime}&btbMaxtime=${btbMaxtime}&btbMaxcount=${btbMaxcount}&btbecpt=${btbecpt}&${groups}`;
 
   fetch(`/process/filter?${queryString}`, {
     method: 'GET',
   })
-    .then((res) => res.json)
-    .then((data) => {});
+    .then((res) => res.json())
+    .then((data) => {
+      document.querySelector('.container').classList.add('hidden');
+
+      // 2. 'generatedTimetables'에 시간표 추가
+    //   const timetableHTML = `
+    //   <div class="timetable-section">
+    //     ${generateDayTable()} <!-- 요일 테이블 -->
+    //     <div style="display: flex;">
+    //       ${generateTimeTable()} <!-- 시간 테이블 -->
+    //       ${generateContentTable()} <!-- 시간표 내용 -->
+    //     </div>
+    //   </div>
+    // `;
+  
+    // // 3. 생성된 시간표를 삽입
+    //   document.getElementById('generatedTimetables').innerHTML = timetableHTML;
+
+      // 3. 생성된 시간표를 삽입
+      document.getElementById('generatedTimetables').style.display = 'block';
+      document.getElementById('generatedTimetables').classList.toggle('shift-left')
+    });
 });
+// 시간표의 시간을 동적으로 생성하는 함수
+// function generateDayTable() {
+//   return `
+//     <table class="day-table">
+//       <thead>
+//         <tr>
+//           <th></th> <!-- 빈 칸 -->
+//           <th>월요일</th>
+//           <th>화요일</th>
+//           <th>수요일</th>
+//           <th>목요일</th>
+//           <th>금요일</th>
+//         </tr>
+//       </thead>
+//     </table>
+//   `;
+// }
+
+// // 시간 테이블 생성
+// function generateTimeTable() {
+//   let timeRows = '';
+//   const startTime = 8; // 8시 시작
+//   const endTime = 23;  // 23시 끝
+//   for (let i = startTime; i <= endTime; i++) {
+//     timeRows += `
+//       <tr>
+//         <th>${i}:00</th>
+//       </tr>
+//     `;
+//   }
+
+//   return `
+//     <table class="time-table">
+//       <tbody>
+//         ${timeRows}
+//       </tbody>
+//     </table>
+//   `;
+// }
+
+// // 시간표 내용 테이블 생성
+// function generateContentTable() {
+//   let contentRows = '';
+//   const startTime = 8;
+//   const endTime = 23;
+
+//   for (let i = startTime; i <= endTime; i++) {
+//     contentRows += `
+//       <tr>
+//         <td class="empty"></td> <!-- 월요일 -->
+//         <td class="empty"></td> <!-- 화요일 -->
+//         <td class="empty"></td> <!-- 수요일 -->
+//         <td class="empty"></td> <!-- 목요일 -->
+//         <td class="empty"></td> <!-- 금요일 -->
+//       </tr>
+//     `;
+//   }
+
+//   return `
+//     <table class="generated-content-table">
+//       <tbody>
+//         ${contentRows}
+//       </tbody>
+//     </table>
+//   `;
+// }

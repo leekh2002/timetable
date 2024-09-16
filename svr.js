@@ -221,8 +221,11 @@ app.get('/process/filter', async (req, res) => {
               reject(err);
             }
             const exec = conn.query(
-              `select day, time, place from time_info where sid=? and class=?`,
-              [element.substring(0, 9), element.substring(10)],
+              `select b.prof_name, a.day, a.time, a.place 
+              from (select day, time, place from time_info where sid=? and class=?) as a
+              join (select prof_name from lecture where sid=? and class=?) as b
+              `,
+              [element.substring(0, 9), element.substring(10),element.substring(0, 9), element.substring(10)],
               (err, rows) => {
                 conn.release();
 
@@ -494,6 +497,7 @@ app.get('/process/filter', async (req, res) => {
 
   await selectTimetables(group, 0);
   console.log('timetables23231: ', timetables);
+  res.json(timetables)
 });
 
 app.listen(3000, () => {

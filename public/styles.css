@@ -21,7 +21,7 @@ body {
 }
 
 /* 시간표가 열렸을 때 container의 위치를 왼쪽으로 이동 */
-.container.shift-left {
+.shift-left {
   left: -350px; /* 원하는 위치로 조정 */
 }
 
@@ -537,3 +537,139 @@ p {
   user-select: none; /* 텍스트 선택 방지 */
 }
 
+ .hidden {
+  display: none;
+}
+
+.generated-timetables {
+  display: flex;
+  flex-direction: row;
+  gap: 1px;
+  width: 100%;
+  max-width: 800px;
+  margin: 20px auto;
+  background-color: #ccc;
+}
+
+.timetable-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.time-table, .day-table {
+  border-collapse: collapse;
+}
+
+.time-table th,
+.time-table td,
+.day-table th,
+.day-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
+}
+
+.time-table th {
+  background-color: #f0f0f0;
+  font-weight: bold;
+}
+
+.day-table th {
+  background-color: #f9f9f9;
+  font-weight: bold;
+}
+
+.time-table td,
+.day-table td {
+  background-color: #fafafa;
+}
+
+.day-table {
+  width: 100%;
+}
+
+.time-table {
+  min-width: 100px;
+}
+
+.generated-content-table {
+  flex-grow: 1;
+  border-collapse: collapse;
+}
+
+.generated-content-table th, 
+.generated-content-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
+}
+
+.generated-content-table td {
+  background-color: #f7f7f7;
+}
+
+.generated-content-table .subject {
+  background-color: #d9eaf7;
+}
+
+
+.day-table,
+.time-table {
+  width: 100%;
+  table-layout: fixed; 
+}
+.time-table{
+  height: 600px;
+}
+
+.day-table thead{
+  height: 60px;
+}
+
+.day-table th, 
+.time-table th, 
+.time-table td {
+  width: 14.28%; 
+  padding: 0px;
+  text-align: center;
+  border: 1px solid #ddd;
+  background-color: #f9f9f9;
+}
+
+
+.time-table .times2 .time2, 
+.day-table th {
+  width: 100%;
+  padding: 0px;
+}
+
+.time2{
+  border: 1px solid #f0f0f0;
+}
+
+.times2{
+  height: 100%;
+}
+.day-table th.sat, 
+.day-table th.sun, 
+.time-table td.sat, 
+.time-table td.sun {
+  display: none; 
+}
+.time2{
+  height: 47.42px;
+}
+/* 그리드 스타일 */
+/* .grids {
+  display: grid;
+  grid-template-rows: repeat(16, 1fr); 
+  grid-template-columns: 1fr; 
+  gap: 1px;
+}
+
+.grid {
+  border: 1px solid #ddd;
+  background-color: #fafafa;
+  height: 60px; 
+} */
