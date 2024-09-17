@@ -548,7 +548,6 @@ p {
   width: 100%;
   max-width: 800px;
   margin: 20px auto;
-  background-color: #ccc;
 }
 
 .timetable-section {
@@ -620,7 +619,7 @@ p {
   table-layout: fixed; 
 }
 .time-table{
-  height: 600px;
+  height: 800px;
 }
 
 .day-table thead{
@@ -645,11 +644,12 @@ p {
 }
 
 .time2{
-  border: 1px solid #f0f0f0;
+  border: 1px solid #ddd;
 }
 
 .times2{
   height: 100%;
+  background-color: rgb(240 240 240);
 }
 .day-table th.sat, 
 .day-table th.sun, 
@@ -658,18 +658,22 @@ p {
   display: none; 
 }
 .time2{
-  height: 47.42px;
-}
-/* 그리드 스타일 */
-/* .grids {
-  display: grid;
-  grid-template-rows: repeat(16, 1fr); 
-  grid-template-columns: 1fr; 
-  gap: 1px;
+  height: 50px;
+  box-sizing: border-box;
 }
 
-.grid {
+.grid2 {
   border: 1px solid #ddd;
-  background-color: #fafafa;
-  height: 60px; 
-} */
+  box-sizing: border-box;
+  height: 50px; 
+} 
+
+.cols2{
+  position: absolute;
+}
+
+.col2{
+  position: absolute;
+  width: 132.16px;
+  overflow: hidden;
+}

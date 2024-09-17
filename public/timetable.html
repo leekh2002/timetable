@@ -91,6 +91,15 @@
     </div>
 
     <div id="generatedTimetables" class="generated-timetables" style="display: none; position: relative;">
+      <div class="title-section">
+        <img src="./image/back.png" alt="back" style="width: 15px; height: 15px;">
+        <div class="pages" style="position: absolute; left: 50%; display: inline-block;">
+          <span class="now-page" style="font-size: 15px !important;">0</span>
+          <span class="separator" style="font-size: 15px !important;">/</span>
+          <span class="all-pages" style="font-size: 15px !important;">0</span>
+        </div>
+        <img src="./image/forward.png" alt="forward" style="width: 15px; height: 15px; float: right;">
+      </div>
       <div class="timetable-section">
         <table class="day-table">
           <thead>
@@ -101,8 +110,8 @@
               <th>Wed</th>
               <th>Thu</th>
               <th>Fri</th>
-              <th style="display: none;" class="sat">Sat</th> 
-              <th style="display: none;" class="sun">Sun</th>
+              <th style="display: none;" class="sat2">Sat</th> 
+              <th style="display: none;" class="sun2">Sun</th>
             </tr>
           </thead>
         </table>
@@ -548,7 +557,7 @@
         
       <form action="/process/filter" method="get" id="filterForm" style="display: none;">
         <div style="position: absolute; top: 20px; left: 10px;">
-          <img src="./image/back.png" class="back-icon" alt="back" style="width: 30px; height: 30 px;">
+          <img src="./image/back.png" class="back-icon" alt="back" style="width: 19px; height: 19px;">
         </div>
         <div class="filtering-section">
           <div>

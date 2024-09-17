@@ -2,6 +2,19 @@ const category = document.getElementById('courseCategory');
 const department = document.getElementById('departments');
 let width_value = '113.31px';
 let group_count = 1;
+const searchForm = document.getElementById('searchForm');
+let class_num2 = 0;
+let color_num = 0;
+let displayed_element = [];
+let sid_set = [];
+const dayDict = {};
+dayDict['월'] = '1';
+dayDict['화'] = '2';
+dayDict['수'] = '3';
+dayDict['목'] = '4';
+dayDict['금'] = '5';
+dayDict['토'] = '6';
+dayDict['일'] = '7';
 
 document.addEventListener('DOMContentLoaded', function () {});
 
@@ -40,7 +53,6 @@ document
     const container = document.querySelector('.container');
     container.classList.remove('shift-left');
   });
-const searchForm = document.getElementById('searchForm');
 
 function adjustTableWidth() {
   const thead = document.querySelector('.results-section .output_result thead');
@@ -128,10 +140,6 @@ document.getElementById('searchForm').addEventListener('submit', (event) => {
     });
 });
 
-let class_num2 = 0;
-let color_num = 0;
-let displayed_element = [];
-
 function enterEvent(event) {
   displayTime(event.target.querySelectorAll('td'), 10, '0.2', 0);
 }
@@ -140,7 +148,6 @@ function leaveEvent(event) {
   removeElements(displayed_element);
 }
 
-let sid_set = [];
 async function clickEvent(row) {
   const td = row.querySelectorAll('td');
   let i;
@@ -302,14 +309,6 @@ async function displayTime(tdElements, color, opacity, op) {
   )
     .then((res) => res.json())
     .then((data) => {
-      const dayDict = {};
-      dayDict['월'] = '1';
-      dayDict['화'] = '2';
-      dayDict['수'] = '3';
-      dayDict['목'] = '4';
-      dayDict['금'] = '5';
-      dayDict['토'] = '6';
-      dayDict['일'] = '7';
       let i = 0;
       data.forEach((element) => {
         if (element.day == null) {
@@ -491,7 +490,7 @@ function dropFun(event) {
   group.appendChild(div);
 }
 
-document.getElementById('filterForm').addEventListener('submit', (event) => {
+document.getElementById('filterForm').addEventListener('submit', async (event) => {
   event.preventDefault();
   const freeday = [];
   document.getElementsByName('freeday').forEach((element) => {
@@ -542,96 +541,60 @@ document.getElementById('filterForm').addEventListener('submit', (event) => {
     )
     .join('&');
   const queryString = `${freedays}&mingap=${mingap}&maxgap=${maxgap}&gotime=${gotime}&leavetime=${leavetime}&btbMaxtime=${btbMaxtime}&btbMaxcount=${btbMaxcount}&btbecpt=${btbecpt}&${groups}`;
+  let results;
 
-  fetch(`/process/filter?${queryString}`, {
+  await fetch(`/process/filter?${queryString}`, {
     method: 'GET',
   })
     .then((res) => res.json())
     .then((data) => {
       document.querySelector('.container').classList.add('hidden');
-
-      // 2. 'generatedTimetables'에 시간표 추가
-    //   const timetableHTML = `
-    //   <div class="timetable-section">
-    //     ${generateDayTable()} <!-- 요일 테이블 -->
-    //     <div style="display: flex;">
-    //       ${generateTimeTable()} <!-- 시간 테이블 -->
-    //       ${generateContentTable()} <!-- 시간표 내용 -->
-    //     </div>
-    //   </div>
-    // `;
-  
-    // // 3. 생성된 시간표를 삽입
-    //   document.getElementById('generatedTimetables').innerHTML = timetableHTML;
-
-      // 3. 생성된 시간표를 삽입
       document.getElementById('generatedTimetables').style.display = 'block';
-      document.getElementById('generatedTimetables').classList.toggle('shift-left')
+      document
+        .getElementById('generatedTimetables')
+        .classList.add('shift-left');
+      results=data
+      addLectureToTimeTable(results[0]);
     });
+  console.log('results: ',results)
+  
 });
-// 시간표의 시간을 동적으로 생성하는 함수
-// function generateDayTable() {
-//   return `
-//     <table class="day-table">
-//       <thead>
-//         <tr>
-//           <th></th> <!-- 빈 칸 -->
-//           <th>월요일</th>
-//           <th>화요일</th>
-//           <th>수요일</th>
-//           <th>목요일</th>
-//           <th>금요일</th>
-//         </tr>
-//       </thead>
-//     </table>
-//   `;
-// }
 
-// // 시간 테이블 생성
-// function generateTimeTable() {
-//   let timeRows = '';
-//   const startTime = 8; // 8시 시작
-//   const endTime = 23;  // 23시 끝
-//   for (let i = startTime; i <= endTime; i++) {
-//     timeRows += `
-//       <tr>
-//         <th>${i}:00</th>
-//       </tr>
-//     `;
-//   }
+function addLectureToTimeTable(lectures) {
+  let color = 0;
 
-//   return `
-//     <table class="time-table">
-//       <tbody>
-//         ${timeRows}
-//       </tbody>
-//     </table>
-//   `;
-// }
+  lectures.forEach((lecture) => {
+    lecture.times.forEach((time) => {
+      const begin =
+        Number(time.time.split('~')[0].split(':')[0] - 8) * 60 +
+        Number(time.time.split('~')[0].split(':')[1]);
+      const end =
+        Number(time.time.split('~')[1].split(':')[0] - 8) * 60 +
+        Number(time.time.split('~')[1].split(':')[1]);
+      const col = document
+        .querySelector(`[data-day2='${dayDict[time.day]}']`)
+        .querySelector('.cols2');
+      const div = document.createElement('div');
+      const p=document.createElement('p');
+      const em=document.createElement('em');
+      const span=document.createElement('span');
+      const h5=document.createElement('h5');
 
-// // 시간표 내용 테이블 생성
-// function generateContentTable() {
-//   let contentRows = '';
-//   const startTime = 8;
-//   const endTime = 23;
+      h5.textContent=lecture.name;
+      em.textContent=time.prof_name;
+      span.textContent=time.place;
+      p.appendChild(em);
+      p.appendChild(span);
 
-//   for (let i = startTime; i <= endTime; i++) {
-//     contentRows += `
-//       <tr>
-//         <td class="empty"></td> <!-- 월요일 -->
-//         <td class="empty"></td> <!-- 화요일 -->
-//         <td class="empty"></td> <!-- 수요일 -->
-//         <td class="empty"></td> <!-- 목요일 -->
-//         <td class="empty"></td> <!-- 금요일 -->
-//       </tr>
-//     `;
-//   }
-
-//   return `
-//     <table class="generated-content-table">
-//       <tbody>
-//         ${contentRows}
-//       </tbody>
-//     </table>
-//   `;
-// }
+      div.className += 'col2 ';
+      div.style.top = `${(begin / 960) * 800}px`;
+      div.style.height = `${((end - begin) / 960) * 800}px`;
+      div.className += `color${color}`;
+      
+      div.appendChild(h5);
+      div.appendChild(p);
+      col.appendChild(div);
+    });
+    color = (color + 1) % 11;
+  });
+}
