@@ -548,13 +548,14 @@ document.getElementById('filterForm').addEventListener('submit', async (event) =
   })
     .then((res) => res.json())
     .then((data) => {
-      document.querySelector('.container').classList.add('hidden');
-      document.getElementById('generatedTimetables').style.display = 'block';
-      document
-        .getElementById('generatedTimetables')
-        .classList.add('shift-left');
-      results=data
-      addLectureToTimeTable(results[0]);
+      console.log('data: ',data);
+      // document.querySelector('.container').classList.add('hidden');
+      // document.getElementById('generatedTimetables').style.display = 'block';
+      // document
+      //   .getElementById('generatedTimetables')
+      //   .classList.add('shift-left');
+      // results=data
+      // addLectureToTimeTable(results[0]);
     });
   console.log('results: ',results)
   
