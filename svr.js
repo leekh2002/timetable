@@ -167,7 +167,6 @@ app.get('/process/search', (req, res) => {
 app.get(`/process/getTime`, (req, res) => {
   const sid = req.query.sid;
   const lect_class = req.query.class;
-
   pool.getConnection((err, conn) => {
     const exec = conn.query(
       `select day, time, place from time_info where sid=? and class=?`,
@@ -192,6 +191,8 @@ app.get(`/process/getTime`, (req, res) => {
 });
 
 app.get('/process/filter', async (req, res) => {
+  let today = new Date();
+  let minutes, seconds, millisec;
   console.log(req.query);
   let freedays = req.query.freeday;
   if (freedays !== undefined && freedays.length == 1) {
@@ -211,992 +212,83 @@ app.get('/process/filter', async (req, res) => {
   const btbMaxcount = req.query.btbMaxcount;
   const btbecpt = req.query.btbecpt;
   const group = req.query.group;
+  const subject_info = [];
+  let test_times = [];
   let group_tree_idx = [];
   //const inserted_subject_list = [];
   let timetables = [];
 
-  // async function selectTimetables(group, group_id) {
-  //   await Promise.all(group[group_id].map(async (element) => {
-  //     //inserted_subject_list.push(element);
-  //     console.log('element: ', element);
-  //     let times = [];
-  //     const queryDatabase = (element) => {
-  //       return new Promise((resolve, reject) => {
-  //         pool.getConnection((err, conn) => {
-  //           if (err) {
-  //             reject(err);
-  //           }
-  //           const exec = conn.query(
-  //             `SELECT b.prof_name, a.day, a.time, a.place, c.name
-  //             FROM time_info a
-  //             JOIN lecture b ON a.sid = b.sid AND a.class = b.class
-  //             JOIN subject c ON a.sid = c.sid
-  //             WHERE a.sid = ? AND a.class = ?;
-  //             `,
-  //             [element.substring(0, 9), element.substring(10)],
-  //             (err, rows) => {
-  //               conn.release();
-  //               if (err) {
-  //                 reject(err);
-  //               } else {
-  //                 resolve(rows);
-  //               }
-  //             }
-  //           );
-  //         });
-  //       });
-  //     };
-
-  //     try {
-  //       const day = await queryDatabase(element);
-  //       times.push(day);
-  //       times = times[0];
-  //       const name = times[0].name;
-  //       times.forEach((element) => {
-  //         delete element.name;
-  //       });
-  //       inserted_subject_list.push({
-  //         sid: element,
-  //         name: name,
-  //         times: times,
-  //       });
-
-  //       let current_timetable = [[], [], [], [], [], [], []];
-  //       const index_of_day = {};
-  //       index_of_day['월'] = 0;
-  //       index_of_day['화'] = 1;
-  //       index_of_day['수'] = 2;
-  //       index_of_day['목'] = 3;
-  //       index_of_day['금'] = 4;
-  //       index_of_day['토'] = 5;
-  //       index_of_day['일'] = 6;
-  //       let j;
-
-  //       //현재 삽입된 과목리스트를 시간표에 추가, 과목코드가 같은과목이 있는지 여부 파악
-  //       for (j = 0; j < inserted_subject_list.length - 1; j++) {
-  //         inserted_subject_list[j].times.forEach((element) => {
-  //           current_timetable[index_of_day[element.day]].push({
-  //             sid: inserted_subject_list[j].sid,
-  //             time_and_place: element,
-  //           });
-  //         });
-  //         if (
-  //           inserted_subject_list[j].sid.substring(0, 9) ==
-  //           element.substring(0, 9)
-  //         ) {
-  //           break;
-  //         }
-  //       }
-  //       if (j < inserted_subject_list.length - 1) {
-  //         inserted_subject_list.pop();
-  //         return;
-  //       }
-  //       let i;
-
-  //       //현재 과목 시간별 탐색
-  //       for (i = 0; i < times.length; i++) {
-  //         const begin =
-  //           Number(times[i].time.split('~')[0].split(':')[0]) * 60 +
-  //           Number(times[i].time.split('~')[0].split(':')[1]);
-  //         const end =
-  //           Number(times[i].time.split('~')[1].split(':')[0]) * 60 +
-  //           Number(times[i].time.split('~')[1].split(':')[1]);
-  //         if (
-  //           (freedays !== undefined && freedays.indexOf(times[i].day) >= 0) ||
-  //           begin < gotime ||
-  //           end > leavetime
-  //         ) {
-  //           break;
-  //         }
-
-  //         let flag = 0;
-
-  //         //현재시간표에서 times[i].day요일의 요소들 탐색
-  //         await current_timetable[index_of_day[times[i].day]].forEach(
-  //           async (element) => {
-  //             const element_begin =
-  //               Number(
-  //                 element.time_and_place.time.split('~')[0].split(':')[0]
-  //               ) *
-  //                 60 +
-  //               Number(element.time_and_place.time.split('~')[0].split(':')[1]);
-  //             const element_end =
-  //               Number(
-  //                 element.time_and_place.time.split('~')[1].split(':')[0]
-  //               ) *
-  //                 60 +
-  //               Number(element.time_and_place.time.split('~')[1].split(':')[1]);
-
-  //             //추가하려는 시간이 현재 등록되어 있는 시간과 겹칠때
-  //             if (
-  //               (begin <= element_begin && end > element_begin) ||
-  //               (begin >= element_begin && begin < element_end)
-  //             ) {
-  //               flag = 1;
-  //               return;
-  //             }
-
-  //             //연강 체크
-  //             if (begin == element_end || end == element_begin) {
-  //               //이전 연강
-  //               let temp_begin = begin;
-  //               let temp_end = end;
-  //               let count = 1,
-  //                 time = end - begin;
-  //               while (true) {
-  //                 let flag = 0;
-  //                 current_timetable[index_of_day[times[i].day]].forEach(
-  //                   (element) => {
-  //                     const element_begin =
-  //                       Number(
-  //                         element.time_and_place.time
-  //                           .split('~')[0]
-  //                           .split(':')[0]
-  //                       ) *
-  //                         60 +
-  //                       Number(
-  //                         element.time_and_place.time
-  //                           .split('~')[0]
-  //                           .split(':')[1]
-  //                       );
-  //                     const element_end =
-  //                       Number(
-  //                         element.time_and_place.time
-  //                           .split('~')[1]
-  //                           .split(':')[0]
-  //                       ) *
-  //                         60 +
-  //                       Number(
-  //                         element.time_and_place.time
-  //                           .split('~')[1]
-  //                           .split(':')[1]
-  //                       );
-  //                     if (temp_begin == element_end) {
-  //                       count++;
-  //                       time += element_end - element_begin;
-  //                       temp_begin = element_begin;
-  //                       flag = 1;
-  //                       return;
-  //                     }
-  //                   }
-  //                 );
-  //                 if (flag == 0) break;
-  //               }
-
-  //               //이후 연강
-  //               while (true) {
-  //                 let flag = 0;
-  //                 current_timetable[index_of_day[times[i].day]].forEach(
-  //                   (element) => {
-  //                     const element_begin =
-  //                       Number(
-  //                         element.time_and_place.time
-  //                           .split('~')[0]
-  //                           .split(':')[0]
-  //                       ) *
-  //                         60 +
-  //                       Number(
-  //                         element.time_and_place.time
-  //                           .split('~')[0]
-  //                           .split(':')[1]
-  //                       );
-  //                     const element_end =
-  //                       Number(
-  //                         element.time_and_place.time
-  //                           .split('~')[1]
-  //                           .split(':')[0]
-  //                       ) *
-  //                         60 +
-  //                       Number(
-  //                         element.time_and_place.time
-  //                           .split('~')[1]
-  //                           .split(':')[1]
-  //                       );
-  //                     if (temp_end == element_begin) {
-  //                       count++;
-  //                       time += element_end - element_begin;
-  //                       temp_end = element_end;
-  //                       flag = 1;
-  //                       return;
-  //                     }
-  //                   }
-  //                 );
-  //                 if (flag == 0) break;
-  //               }
-  //               if (count > btbMaxcount || time > btbMaxtime) {
-  //                 flag = 1;
-  //                 return;
-  //               }
-
-  //               //연강 가능여부
-  //               if (btbecpt == 'true') {
-  //                 const element_place = element.time_and_place.place;
-  //                 const queryDatabase = (place1, place2) => {
-  //                   return new Promise((resolve, reject) => {
-  //                     pool.getConnection((err, conn) => {
-  //                       if (err) reject(err);
-  //                       const exec = conn.query(
-  //                         `select time from (select bid from lectroom where name=?) as a,
-  //                                         (select bid from lectroom where name=?) as b,
-  //                                         distance c
-  //                                   where c.start=a.bid and c.end=b.bid`,
-  //                         [element_place, place2],
-  //                         (err, rows) => {
-  //                           conn.release();
-
-  //                           resolve(rows[0].time);
-  //                         }
-  //                       );
-  //                     });
-  //                   });
-  //                 };
-
-  //                 try {
-  //                   const time = await queryDatabase(
-  //                     element_place,
-  //                     times[i].place
-  //                   );
-  //                   console.log(time);
-  //                   if (time > 600) {
-  //                     flag = 1;
-  //                     return;
-  //                   }
-  //                 } catch (err) {}
-  //               }
-  //             }
-  //           }
-  //         );
-  //         if (flag == 1) {
-  //           break;
-  //         }
-  //       }
-  //       if (i < times.length) {
-  //         inserted_subject_list.pop();
-  //         return;
-  //       }
-
-  //       if (group.length - 1 != group_id) {
-  //         await selectTimetables(group, group_id + 1);
-  //       } else {
-  //         //마지막 그룹에 있는과목을 current_timetable에 추가
-  //         inserted_subject_list[inserted_subject_list.length - 1].times.forEach(
-  //           (element) => {
-  //             current_timetable[index_of_day[element.day]].push({
-  //               sid: inserted_subject_list[inserted_subject_list.length - 1]
-  //                 .sid,
-  //               time_and_place: element,
-  //             });
-  //           }
-  //         );
-
-  //         //강의간 시간간격 체크
-  //         current_timetable.forEach((element) => {
-  //           element.sort((a, b) =>
-  //             a.time_and_place.time.localeCompare(b.time_and_place.time)
-  //           );
-  //           for (let i = 1; i < element.length; i++) {
-  //             const before_end =
-  //               Number(
-  //                 element[i - 1].time_and_place.time.split('~')[1].split(':')[0]
-  //               ) *
-  //                 60 +
-  //               Number(
-  //                 element[i - 1].time_and_place.time.split('~')[1].split(':')[1]
-  //               );
-
-  //             const now_begin =
-  //               Number(
-  //                 element[i].time_and_place.time.split('~')[0].split(':')[0]
-  //               ) *
-  //                 60 +
-  //               Number(
-  //                 element[i].time_and_place.time.split('~')[0].split(':')[1]
-  //               );
-
-  //             if (
-  //               now_begin - before_end < mingap ||
-  //               now_begin - before_end > maxgap
-  //             ) {
-  //               //밑 if문의 조건에 충족하지 않도록 리스트의 요소 제거
-  //               inserted_subject_list.pop();
-  //               console.log('시간 간격 안맞음');
-  //             }
-  //           }
-  //         });
-
-  //         console.log('inserted: ', inserted_subject_list);
-  //         if (inserted_subject_list.length == group.length) {
-  //           timetables.push([]);
-  //           inserted_subject_list.forEach((element) => {
-  //             timetables[timetables.length - 1].push(element);
-  //           });
-  //           console.log('timetables: ',timetables);
-  //         }
-  //       }
-  //       inserted_subject_list.pop();
-  //     } catch (err) {
-  //       console.log('SQL 실행 시 오류 발생');
-  //       console.dir(err);
-  //     }
-  //   }));
-  //   // for (const element of group[group_id]) {
-  //   //   //inserted_subject_list.push(element);
-  //   //   let times = [];
-  //   //   const queryDatabase = (element) => {
-  //   //     return new Promise((resolve, reject) => {
-  //   //       pool.getConnection((err, conn) => {
-  //   //         if (err) {
-  //   //           reject(err);
-  //   //         }
-  //   //         const exec = conn.query(
-  //   //           `SELECT b.prof_name, a.day, a.time, a.place, c.name
-  //   //           FROM time_info a
-  //   //           JOIN lecture b ON a.sid = b.sid AND a.class = b.class
-  //   //           JOIN subject c ON a.sid = c.sid
-  //   //           WHERE a.sid = ? AND a.class = ?;
-  //   //           `,
-  //   //           [element.substring(0, 9), element.substring(10)],
-  //   //           (err, rows) => {
-  //   //             conn.release();
-  //   //             if (err) {
-  //   //               reject(err);
-  //   //             } else {
-  //   //               resolve(rows);
-  //   //             }
-  //   //           }
-  //   //         );
-  //   //       });
-  //   //     });
-  //   //   };
-
-  //   //   try {
-  //   //     const day = await queryDatabase(element);
-  //   //     times.push(day);
-  //   //     times = times[0];
-  //   //     const name=times[0].name;
-  //   //     times.forEach((element)=>{
-  //   //       delete element.name;
-  //   //     })
-  //   //     inserted_subject_list.push({
-  //   //       sid: element,
-  //   //       name: name,
-  //   //       times: times,
-  //   //     });
-
-  //   //     let current_timetable = [[], [], [], [], [], [], []];
-  //   //     const index_of_day = {};
-  //   //     index_of_day['월'] = 0;
-  //   //     index_of_day['화'] = 1;
-  //   //     index_of_day['수'] = 2;
-  //   //     index_of_day['목'] = 3;
-  //   //     index_of_day['금'] = 4;
-  //   //     index_of_day['토'] = 5;
-  //   //     index_of_day['일'] = 6;
-  //   //     let j;
-
-  //   //     //현재 삽입된 과목리스트를 시간표에 추가, 과목코드가 같은과목이 있는지 여부 파악
-  //   //     for (j = 0; j < inserted_subject_list.length - 1; j++) {
-  //   //       inserted_subject_list[j].times.forEach((element) => {
-  //   //         current_timetable[index_of_day[element.day]].push({
-  //   //           sid: inserted_subject_list[j].sid,
-  //   //           time_and_place: element,
-  //   //         });
-  //   //       });
-  //   //       if (
-  //   //         inserted_subject_list[j].sid.substring(0, 9) ==
-  //   //         element.substring(0, 9)
-  //   //       ) {
-  //   //         break;
-  //   //       }
-  //   //     }
-  //   //     if (j < inserted_subject_list.length - 1) {
-  //   //       inserted_subject_list.pop();
-  //   //       continue;
-  //   //     }
-  //   //     let i;
-
-  //   //     //현재 과목 시간별 탐색
-  //   //     for (i = 0; i < times.length; i++) {
-  //   //       const begin =
-  //   //         Number(times[i].time.split('~')[0].split(':')[0]) * 60 +
-  //   //         Number(times[i].time.split('~')[0].split(':')[1]);
-  //   //       const end =
-  //   //         Number(times[i].time.split('~')[1].split(':')[0]) * 60 +
-  //   //         Number(times[i].time.split('~')[1].split(':')[1]);
-  //   //       if (
-  //   //         (freedays !== undefined && freedays.indexOf(times[i].day) >= 0) ||
-  //   //         begin < gotime ||
-  //   //         end > leavetime
-  //   //       ) {
-  //   //         break;
-  //   //       }
-
-  //   //       let flag = 0;
-
-  //   //       //현재시간표에서 times[i].day요일의 요소들 탐색
-  //   //       await current_timetable[index_of_day[times[i].day]].forEach(
-  //   //         async (element) => {
-  //   //           const element_begin =
-  //   //             Number(
-  //   //               element.time_and_place.time.split('~')[0].split(':')[0]
-  //   //             ) *
-  //   //               60 +
-  //   //             Number(element.time_and_place.time.split('~')[0].split(':')[1]);
-  //   //           const element_end =
-  //   //             Number(
-  //   //               element.time_and_place.time.split('~')[1].split(':')[0]
-  //   //             ) *
-  //   //               60 +
-  //   //             Number(element.time_and_place.time.split('~')[1].split(':')[1]);
-
-  //   //           //추가하려는 시간이 현재 등록되어 있는 시간과 겹칠때
-  //   //           if (
-  //   //             (begin <= element_begin && end > element_begin) ||
-  //   //             (begin >= element_begin && begin < element_end)
-  //   //           ) {
-  //   //             flag = 1;
-  //   //             return;
-  //   //           }
-
-  //   //           //연강 체크
-  //   //           if (begin == element_end || end == element_begin) {
-  //   //             //이전 연강
-  //   //             let temp_begin = begin;
-  //   //             let temp_end = end;
-  //   //             let count = 1,
-  //   //               time = end - begin;
-  //   //             while (true) {
-  //   //               let flag = 0;
-  //   //               current_timetable[index_of_day[times[i].day]].forEach(
-  //   //                 (element) => {
-  //   //                   const element_begin =
-  //   //                     Number(
-  //   //                       element.time_and_place.time
-  //   //                         .split('~')[0]
-  //   //                         .split(':')[0]
-  //   //                     ) *
-  //   //                       60 +
-  //   //                     Number(
-  //   //                       element.time_and_place.time
-  //   //                         .split('~')[0]
-  //   //                         .split(':')[1]
-  //   //                     );
-  //   //                   const element_end =
-  //   //                     Number(
-  //   //                       element.time_and_place.time
-  //   //                         .split('~')[1]
-  //   //                         .split(':')[0]
-  //   //                     ) *
-  //   //                       60 +
-  //   //                     Number(
-  //   //                       element.time_and_place.time
-  //   //                         .split('~')[1]
-  //   //                         .split(':')[1]
-  //   //                     );
-  //   //                   if (temp_begin == element_end) {
-  //   //                     count++;
-  //   //                     time += element_end - element_begin;
-  //   //                     temp_begin = element_begin;
-  //   //                     flag = 1;
-  //   //                     return;
-  //   //                   }
-  //   //                 }
-  //   //               );
-  //   //               if (flag == 0) break;
-  //   //             }
-
-  //   //             //이후 연강
-  //   //             while (true) {
-  //   //               let flag = 0;
-  //   //               current_timetable[index_of_day[times[i].day]].forEach(
-  //   //                 (element) => {
-  //   //                   const element_begin =
-  //   //                     Number(
-  //   //                       element.time_and_place.time
-  //   //                         .split('~')[0]
-  //   //                         .split(':')[0]
-  //   //                     ) *
-  //   //                       60 +
-  //   //                     Number(
-  //   //                       element.time_and_place.time
-  //   //                         .split('~')[0]
-  //   //                         .split(':')[1]
-  //   //                     );
-  //   //                   const element_end =
-  //   //                     Number(
-  //   //                       element.time_and_place.time
-  //   //                         .split('~')[1]
-  //   //                         .split(':')[0]
-  //   //                     ) *
-  //   //                       60 +
-  //   //                     Number(
-  //   //                       element.time_and_place.time
-  //   //                         .split('~')[1]
-  //   //                         .split(':')[1]
-  //   //                     );
-  //   //                   if (temp_end == element_begin) {
-  //   //                     count++;
-  //   //                     time += element_end - element_begin;
-  //   //                     temp_end = element_end;
-  //   //                     flag = 1;
-  //   //                     return;
-  //   //                   }
-  //   //                 }
-  //   //               );
-  //   //               if (flag == 0) break;
-  //   //             }
-  //   //             if (count > btbMaxcount || time > btbMaxtime) {
-  //   //               flag = 1;
-  //   //               return;
-  //   //             }
-
-  //   //             //연강 가능여부
-  //   //             if (btbecpt == 'true') {
-  //   //               const element_place = element.time_and_place.place;
-  //   //               const queryDatabase = (place1, place2) => {
-  //   //                 return new Promise((resolve, reject) => {
-  //   //                   pool.getConnection((err, conn) => {
-  //   //                     if (err) reject(err);
-  //   //                     const exec = conn.query(
-  //   //                       `select time from (select bid from lectroom where name=?) as a,
-  //   //                                       (select bid from lectroom where name=?) as b,
-  //   //                                       distance c
-  //   //                                 where c.start=a.bid and c.end=b.bid`,
-  //   //                       [element_place, place2],
-  //   //                       (err, rows) => {
-  //   //                         conn.release();
-
-  //   //                         resolve(rows[0].time);
-  //   //                       }
-  //   //                     );
-  //   //                   });
-  //   //                 });
-  //   //               };
-
-  //   //               try {
-  //   //                 const time = await queryDatabase(
-  //   //                   element_place,
-  //   //                   times[i].place
-  //   //                 );
-  //   //                 console.log(time);
-  //   //                 if (time > 600) {
-  //   //                   flag = 1;
-  //   //                   return;
-  //   //                 }
-  //   //               } catch (err) {}
-  //   //             }
-  //   //           }
-  //   //         }
-  //   //       );
-  //   //       if (flag == 1) {
-  //   //         break;
-  //   //       }
-  //   //     }
-  //   //     if (i < times.length) {
-  //   //       inserted_subject_list.pop();
-  //   //       continue;
-  //   //     }
-
-  //   //     if (group.length - 1 != group_id) {
-  //   //       await selectTimetables(group, group_id + 1);
-  //   //     } else {
-  //   //       //마지막 그룹에 있는과목을 current_timetable에 추가
-  //   //       inserted_subject_list[inserted_subject_list.length-1].times.forEach((element)=>{
-  //   //         current_timetable[index_of_day[element.day]].push({
-  //   //           sid:inserted_subject_list[inserted_subject_list.length-1].sid,
-  //   //           time_and_place: element
-  //   //         })
-  //   //       })
-
-  //   //       //강의간 시간간격 체크
-  //   //       current_timetable.forEach((element)=>{
-  //   //         element.sort((a,b)=> a.time_and_place.time.localeCompare(b.time_and_place.time));
-  //   //         for(let i=1;i<element.length;i++){
-  //   //           const before_end=Number(element[i-1].time_and_place.time.split('~')[1].split(':')[0])*60+
-  //   //             Number(element[i-1].time_and_place.time.split('~')[1].split(':')[1]);
-
-  //   //           const now_begin=Number(element[i].time_and_place.time.split('~')[0].split(':')[0])*60+
-  //   //             Number(element[i].time_and_place.time.split('~')[0].split(':')[1]);
-
-  //   //           if(now_begin-before_end<mingap || now_begin-before_end>maxgap){
-  //   //             //밑 if문의 조건에 충족하지 않도록 리스트의 요소 제거
-  //   //             inserted_subject_list.pop();
-  //   //             console.log('시간 간격 안맞음');
-  //   //           }
-  //   //         }
-  //   //       })
-  //   //       if (inserted_subject_list.length == group.length) {
-  //   //         timetables.push([]);
-  //   //         inserted_subject_list.forEach((element) => {
-  //   //           timetables[timetables.length - 1].push(element);
-  //   //         });
-  //   //       }
-  //   //     }
-  //   //     inserted_subject_list.pop();
-  //   //   } catch (err) {
-  //   //     console.log('SQL 실행 시 오류 발생');
-  //   //     console.dir(err);
-  //   //   }
-  //   // }
-  // }
-
-  // async function selectTimetables(
-  //   group,
-  //   group_id,
-  //   inserted_subject_list,
-  //   test_value
-  // ) {
-  //   console.log('test_value: ', test_value);
-  //   console.log('inserted: ', inserted_subject_list);
-  //   await Promise.all(
-  //     group[group_id].map(async (element) => {
-  //       //let inserted_subject_list=inserted_subject_list;
-  //       console.log('element: ', element);
-  //       let times = [];
-  //       const queryDatabase = (element) => {
-  //         return new Promise((resolve, reject) => {
-  //           pool.getConnection((err, conn) => {
-  //             if (err) {
-  //               reject(err);
-  //             }
-  //             const exec = conn.query(
-  //               `SELECT b.prof_name, a.day, a.time, a.place, c.name
-  //             FROM time_info a
-  //             JOIN lecture b ON a.sid = b.sid AND a.class = b.class
-  //             JOIN subject c ON a.sid = c.sid
-  //             WHERE a.sid = ? AND a.class = ?;
-  //             `,
-  //               [element.substring(0, 9), element.substring(10)],
-  //               (err, rows) => {
-  //                 conn.release();
-  //                 if (err) {
-  //                   reject(err);
-  //                 } else {
-  //                   resolve(rows);
-  //                 }
-  //               }
-  //             );
-  //           });
-  //         });
-  //       };
-
-  //       try {
-  //         // console.log('inserted: ',inserted_subject_list);
-  //         const day = await queryDatabase(element);
-  //         times.push(day);
-  //         times = times[0];
-  //         const name = times[0].name;
-  //         times.forEach((element) => {
-  //           delete element.name;
-  //         });
-  //         inserted_subject_list.push({
-  //           sid: element,
-  //           name: name,
-  //           times: times,
-  //         });
-
-  //         let current_timetable = [[], [], [], [], [], [], []];
-  //         const index_of_day = {};
-  //         index_of_day['월'] = 0;
-  //         index_of_day['화'] = 1;
-  //         index_of_day['수'] = 2;
-  //         index_of_day['목'] = 3;
-  //         index_of_day['금'] = 4;
-  //         index_of_day['토'] = 5;
-  //         index_of_day['일'] = 6;
-  //         let j;
-
-  //         //현재 삽입된 과목리스트를 시간표에 추가, 과목코드가 같은과목이 있는지 여부 파악
-  //         for (j = 0; j < inserted_subject_list.length - 1; j++) {
-  //           inserted_subject_list[j].times.forEach((element) => {
-  //             current_timetable[index_of_day[element.day]].push({
-  //               sid: inserted_subject_list[j].sid,
-  //               time_and_place: element,
-  //             });
-  //           });
-  //           if (
-  //             inserted_subject_list[j].sid.substring(0, 9) ==
-  //             element.substring(0, 9)
-  //           ) {
-  //             break;
-  //           }
-  //         }
-  //         if (j < inserted_subject_list.length - 1) {
-  //           inserted_subject_list.pop();
-  //           return;
-  //         }
-  //         let i;
-
-  //         //현재 과목 시간별 탐색
-  //         for (i = 0; i < times.length; i++) {
-  //           const begin =
-  //             Number(times[i].time.split('~')[0].split(':')[0]) * 60 +
-  //             Number(times[i].time.split('~')[0].split(':')[1]);
-  //           const end =
-  //             Number(times[i].time.split('~')[1].split(':')[0]) * 60 +
-  //             Number(times[i].time.split('~')[1].split(':')[1]);
-  //           if (
-  //             (freedays !== undefined && freedays.indexOf(times[i].day) >= 0) ||
-  //             begin < gotime ||
-  //             end > leavetime
-  //           ) {
-  //             break;
-  //           }
-
-  //           let flag = 0;
-
-  //           //현재시간표에서 times[i].day요일의 요소들 탐색
-  //           await current_timetable[index_of_day[times[i].day]].forEach(
-  //             async (element) => {
-  //               const element_begin =
-  //                 Number(
-  //                   element.time_and_place.time.split('~')[0].split(':')[0]
-  //                 ) *
-  //                   60 +
-  //                 Number(
-  //                   element.time_and_place.time.split('~')[0].split(':')[1]
-  //                 );
-  //               const element_end =
-  //                 Number(
-  //                   element.time_and_place.time.split('~')[1].split(':')[0]
-  //                 ) *
-  //                   60 +
-  //                 Number(
-  //                   element.time_and_place.time.split('~')[1].split(':')[1]
-  //                 );
-
-  //               //추가하려는 시간이 현재 등록되어 있는 시간과 겹칠때
-  //               if (
-  //                 (begin <= element_begin && end > element_begin) ||
-  //                 (begin >= element_begin && begin < element_end)
-  //               ) {
-  //                 flag = 1;
-  //                 return;
-  //               }
-
-  //               //연강 체크
-  //               if (begin == element_end || end == element_begin) {
-  //                 //이전 연강
-  //                 let temp_begin = begin;
-  //                 let temp_end = end;
-  //                 let count = 1,
-  //                   time = end - begin;
-  //                 while (true) {
-  //                   let flag = 0;
-  //                   current_timetable[index_of_day[times[i].day]].forEach(
-  //                     (element) => {
-  //                       const element_begin =
-  //                         Number(
-  //                           element.time_and_place.time
-  //                             .split('~')[0]
-  //                             .split(':')[0]
-  //                         ) *
-  //                           60 +
-  //                         Number(
-  //                           element.time_and_place.time
-  //                             .split('~')[0]
-  //                             .split(':')[1]
-  //                         );
-  //                       const element_end =
-  //                         Number(
-  //                           element.time_and_place.time
-  //                             .split('~')[1]
-  //                             .split(':')[0]
-  //                         ) *
-  //                           60 +
-  //                         Number(
-  //                           element.time_and_place.time
-  //                             .split('~')[1]
-  //                             .split(':')[1]
-  //                         );
-  //                       if (temp_begin == element_end) {
-  //                         count++;
-  //                         time += element_end - element_begin;
-  //                         temp_begin = element_begin;
-  //                         flag = 1;
-  //                         return;
-  //                       }
-  //                     }
-  //                   );
-  //                   if (flag == 0) break;
-  //                 }
-
-  //                 //이후 연강
-  //                 while (true) {
-  //                   let flag = 0;
-  //                   current_timetable[index_of_day[times[i].day]].forEach(
-  //                     (element) => {
-  //                       const element_begin =
-  //                         Number(
-  //                           element.time_and_place.time
-  //                             .split('~')[0]
-  //                             .split(':')[0]
-  //                         ) *
-  //                           60 +
-  //                         Number(
-  //                           element.time_and_place.time
-  //                             .split('~')[0]
-  //                             .split(':')[1]
-  //                         );
-  //                       const element_end =
-  //                         Number(
-  //                           element.time_and_place.time
-  //                             .split('~')[1]
-  //                             .split(':')[0]
-  //                         ) *
-  //                           60 +
-  //                         Number(
-  //                           element.time_and_place.time
-  //                             .split('~')[1]
-  //                             .split(':')[1]
-  //                         );
-  //                       if (temp_end == element_begin) {
-  //                         count++;
-  //                         time += element_end - element_begin;
-  //                         temp_end = element_end;
-  //                         flag = 1;
-  //                         return;
-  //                       }
-  //                     }
-  //                   );
-  //                   if (flag == 0) break;
-  //                 }
-  //                 if (count > btbMaxcount || time > btbMaxtime) {
-  //                   flag = 1;
-  //                   return;
-  //                 }
-
-  //                 //연강 가능여부
-  //                 if (btbecpt == 'true') {
-  //                   const element_place = element.time_and_place.place;
-  //                   const queryDatabase = (place1, place2) => {
-  //                     return new Promise((resolve, reject) => {
-  //                       pool.getConnection((err, conn) => {
-  //                         if (err) reject(err);
-  //                         const exec = conn.query(
-  //                           `select time from (select bid from lectroom where name=?) as a,
-  //                                         (select bid from lectroom where name=?) as b,
-  //                                         distance c
-  //                                   where c.start=a.bid and c.end=b.bid`,
-  //                           [element_place, place2],
-  //                           (err, rows) => {
-  //                             conn.release();
-
-  //                             resolve(rows[0].time);
-  //                           }
-  //                         );
-  //                       });
-  //                     });
-  //                   };
-
-  //                   try {
-  //                     const time = await queryDatabase(
-  //                       element_place,
-  //                       times[i].place
-  //                     );
-  //                     console.log(time);
-  //                     if (time > 600) {
-  //                       flag = 1;
-  //                       return;
-  //                     }
-  //                   } catch (err) {}
-  //                 }
-  //               }
-  //             }
-  //           );
-  //           if (flag == 1) {
-  //             break;
-  //           }
-  //         }
-  //         if (i < times.length) {
-  //           inserted_subject_list.pop();
-  //           return;
-  //         }
-  //         console.log(inserted_subject_list);
-  //         if (group.length - 1 > inserted_subject_list.length) {
-  //           await selectTimetables(
-  //             group,
-  //             group_id + 1,
-  //             inserted_subject_list,
-  //             ++test_value
-  //           );
-  //         } else {
-  //           //마지막 그룹에 있는과목을 current_timetable에 추가
-  //           inserted_subject_list[
-  //             inserted_subject_list.length - 1
-  //           ].times.forEach((element) => {
-  //             current_timetable[index_of_day[element.day]].push({
-  //               sid: inserted_subject_list[inserted_subject_list.length - 1]
-  //                 .sid,
-  //               time_and_place: element,
-  //             });
-  //           });
-
-  //           //강의간 시간간격 체크
-  //           current_timetable.forEach((element) => {
-  //             element.sort((a, b) =>
-  //               a.time_and_place.time.localeCompare(b.time_and_place.time)
-  //             );
-  //             for (let i = 1; i < element.length; i++) {
-  //               const before_end =
-  //                 Number(
-  //                   element[i - 1].time_and_place.time
-  //                     .split('~')[1]
-  //                     .split(':')[0]
-  //                 ) *
-  //                   60 +
-  //                 Number(
-  //                   element[i - 1].time_and_place.time
-  //                     .split('~')[1]
-  //                     .split(':')[1]
-  //                 );
-
-  //               const now_begin =
-  //                 Number(
-  //                   element[i].time_and_place.time.split('~')[0].split(':')[0]
-  //                 ) *
-  //                   60 +
-  //                 Number(
-  //                   element[i].time_and_place.time.split('~')[0].split(':')[1]
-  //                 );
-
-  //               if (
-  //                 now_begin - before_end < mingap ||
-  //                 now_begin - before_end > maxgap
-  //               ) {
-  //                 //밑 if문의 조건에 충족하지 않도록 리스트의 요소 제거
-  //                 inserted_subject_list.pop();
-  //                 console.log('시간 간격 안맞음');
-  //               }
-  //             }
-  //           });
-
-  //           // console.log('inserted: ', inserted_subject_list);
-  //           if (inserted_subject_list.length == group.length) {
-  //             timetables.push([]);
-  //             inserted_subject_list.forEach((element) => {
-  //               timetables[timetables.length - 1].push(element);
-  //             });
-
-  //             console.log('timetables: ', timetables);
-  //           }
-  //         }
-  //         inserted_subject_list.pop();
-  //       } catch (err) {
-  //         console.log('SQL 실행 시 오류 발생');
-  //         console.dir(err);
-  //       }
-  //     })
-  //   );
-  // }
-
-  async function processGroup() {
-    const promises = group.map(async (element) => {
-      test(i++); // 비동기 작업으로 test 함수 실행
-    });
-    //await Promise.all(promises);  // 모든 비동기 작업을 기다림
+  for (const element of group) {
+    subject_info.push([]);
+    for (const el of element) {
+      const queryDatabase = (element) => {
+        return new Promise((resolve, reject) => {
+          pool.getConnection((err, conn) => {
+            if (err) {
+              reject(err);
+            }
+            const exec = conn.query(
+              `SELECT b.prof_name, a.day, a.time, a.place, c.name
+                FROM time_info a
+                JOIN lecture b ON a.sid = b.sid AND a.class = b.class
+                JOIN subject c ON a.sid = c.sid
+                WHERE a.sid = ? AND a.class = ?;
+                `,
+              [element.substring(0, 9), element.substring(10)],
+              (err, rows) => {
+                conn.release();
+                if (err) {
+                  reject(err);
+                } else {
+                  resolve(rows);
+                }
+              }
+            );
+          });
+        });
+      };
+      try {
+        const times = await queryDatabase(el);
+        subject_info[subject_info.length - 1].push(times);
+      } catch (err) {}
+    }
   }
 
+
+  //(시작 건물, 도착 건물) : 시간 배열 생성해야함.  
+  const queryDatabase = (element) => {
+    return new Promise((resolve, reject) => {
+      pool.getConnection((err, conn) => {
+        if (err) {
+          reject(err);
+        }
+        const exec = conn.query(
+          `SELECT b.prof_name, a.day, a.time, a.place, c.name
+            FROM time_info a
+            JOIN lecture b ON a.sid = b.sid AND a.class = b.class
+            JOIN subject c ON a.sid = c.sid
+            WHERE a.sid = ? AND a.class = ?;
+            `,
+          [element.substring(0, 9), element.substring(10)],
+          (err, rows) => {
+            conn.release();
+            if (err) {
+              reject(err);
+            } else {
+              resolve(rows);
+            }
+          }
+        );
+      });
+    });
+  };
+  try {
+    const times = await queryDatabase(el);
+    subject_info[subject_info.length - 1].push(times);
+  } catch (err) {}
+
+
+  console.log('subject_info: ', subject_info);
   let i = 0;
   group_tree_idx.push({
     begin_idx: 0,
@@ -1214,589 +306,336 @@ app.get('/process/filter', async (req, res) => {
   console.log('idx: ', group_tree_idx);
   async function selectTimetables() {
     const promises = [];
-   
+
     for (
       i = group_tree_idx[group.length].begin_idx;
       i <= group_tree_idx[group.length].end_idx;
       i++
     ) {
-      promises.push(processGroup(i, group.length, []));
+      test_times.push([]);
+      await processGroup(
+        i,
+        group.length,
+        [],
+        i - group_tree_idx[group.length].begin_idx
+      );
+      // promises.push(
+      //   processGroup(
+      //     i,
+      //     group.length,
+      //     [],
+      //     i - group_tree_idx[group.length].begin_idx
+      //   )
+      // );
     }
-    await Promise.all(promises);
+    //await Promise.all(promises);
+    console.log('asefasegesafsaegsafsef');
   }
 
-  async function processGroup(idx, groupNum, inserted_subject_list) {
-    // 비동기 작업 흉내내기 (1초 지연)
-    if (Math.floor(idx) == 0) {
-      let current_timetable = [[], [], [], [], [], [], []];
-      const index_of_day = {};
-      index_of_day['월'] = 0;
-      index_of_day['화'] = 1;
-      index_of_day['수'] = 2;
-      index_of_day['목'] = 3;
-      index_of_day['금'] = 4;
-      index_of_day['토'] = 5;
-      index_of_day['일'] = 6;
-      let flag = 0;
+  async function processGroup(idx, groupNum, inserted_subject_list, test_idx) {
+    const param3_list = inserted_subject_list;
+    const next_idx = Math.floor(
+      (idx - group_tree_idx[groupNum].begin_idx) / group[groupNum - 1].length +
+        group_tree_idx[groupNum - 1].begin_idx
+    );
 
-      await Promise.all(
-        inserted_subject_list.map(async (element) => {
-          let times = [];
-          const queryDatabase = (element) => {
-            return new Promise((resolve, reject) => {
-              pool.getConnection((err, conn) => {
-                if (err) {
-                  reject(err);
-                }
-                const exec = conn.query(
-                  `SELECT b.prof_name, a.day, a.time, a.place, c.name
-                FROM time_info a
-                JOIN lecture b ON a.sid = b.sid AND a.class = b.class
-                JOIN subject c ON a.sid = c.sid
-                WHERE a.sid = ? AND a.class = ?;
-                `,
-                  [element.substring(0, 9), element.substring(10)],
-                  (err, rows) => {
-                    conn.release();
-                    if (err) {
-                      reject(err);
-                    } else {
-                      resolve(rows);
-                    }
-                  }
-                );
-              });
-            });
-          };
-
-          try {
-            //const times = await queryDatabase(element);
-            let times=[];
-            times.push({
-              prof_name: 'asefs',
-              day:'월',
-              time:'12:00~15:00',
-              place:'공5411',
-              name:'asefsa'
-            })
-            times.push({
-              prof_name: 'asefs',
-              day:'수',
-              time:'12:00~15:00',
-              place:'공5411',
-              name:'asefsa'
-            })
-           // console.log('times: ', times);
-            times.forEach((time) => {
-              //console.log('time: ',time)
-              const begin =
-                Number(time.time.split('~')[0].split(':')[0]) * 60 +
-                Number(time.time.split('~')[0].split(':')[1]);
-              const end =
-                Number(time.time.split('~')[1].split(':')[0]) * 60 +
-                Number(time.time.split('~')[1].split(':')[1]);
-
-              //요일공강 필터링 조건에 만족하는지 확인
-              if (freedays !== undefined) {
-               // console.log('freedays: ', freedays);
-                freedays.forEach((freeday) => {
-               //   console.log('freeday: ', freeday);
-                  if (freeday == time.day) {
-                    flag = 1;
-                    return;
-                  }
-                });
+    while (idx != 0) {
+      param3_list.push(
+        group[groupNum - 1][
+          (idx - group_tree_idx[groupNum].begin_idx) %
+            group[groupNum - 1].length
+        ]
+      );
+      idx = Math.floor(
+        (idx - group_tree_idx[groupNum].begin_idx) /
+          group[groupNum - 1].length +
+          group_tree_idx[groupNum - 1].begin_idx
+      );
+      groupNum--;
+    }
+    let current_timetable = [[], [], [], [], [], [], []];
+    const index_of_day = {};
+    index_of_day['월'] = 0;
+    index_of_day['화'] = 1;
+    index_of_day['수'] = 2;
+    index_of_day['목'] = 3;
+    index_of_day['금'] = 4;
+    index_of_day['토'] = 5;
+    index_of_day['일'] = 6;
+    let flag = 0;
+    
+    await Promise.all(
+      param3_list.map(async (element) => {
+        let times = [];
+        const queryDatabase = (element) => {
+          return new Promise((resolve, reject) => {
+            pool.getConnection((err, conn) => {
+              if (err) {
+                reject(err);
               }
-
-              //등하교시간 필터링 조건에 만족하는지 확인
-              if (begin < gotime || end > leavetime) {
-                flag = 1;
-                return;
-              }
-
-              //현재 시간표에서 time.day요일에 포함되어있는 과목 요소들 탐색
-              current_timetable[index_of_day[time.day]].forEach(
-                async (subject) => {
-                  const sub_begin =
-                    Number(subject.time.split('~')[0].split(':')[0]) * 60 +
-                    Number(subject.time.split('~')[0].split(':')[1]);
-                  const sub_end =
-                    Number(subject.time.split('~')[1].split(':')[0]) * 60 +
-                    Number(subject.time.split('~')[1].split(':')[1]);
-
-                  //과목코드 겹치는지 여부확인
-                  if (element == subject.sid) {
-                    flag = 1;
-                    return;
-                  }
-
-                  //시간이 겹치는 과목이 있는지 확인
-                  if (
-                    (begin <= sub_begin && end > sub_begin) ||
-                    (begin >= sub_begin && begin < sub_end)
-                  ) {
-                    flag = 1;
-                    return;
-                  }
-
-                  //연강필터링 조건 확인
-                  if (begin == sub_end || end == sub_begin) {
-                    //이전 연강
-                    let temp_begin = begin;
-                    let temp_end = end;
-                    let count = 1,
-                      time_sum = end - begin;
-                    while (true) {
-                      let flag = 0;
-                      current_timetable[index_of_day[time.day]].forEach(
-                        (element) => {
-                          const element_begin =
-                            Number(element.time.split('~')[0].split(':')[0]) *
-                              60 +
-                            Number(element.time.split('~')[0].split(':')[1]);
-                          const element_end =
-                            Number(element.time.split('~')[1].split(':')[0]) *
-                              60 +
-                            Number(element.time.split('~')[1].split(':')[1]);
-                          if (temp_begin == element_end) {
-                            count++;
-                            time_sum += element_end - element_begin;
-                            temp_begin = element_begin;
-                            flag = 1;
-                            return;
-                          }
-                        }
-                      );
-                      if (flag == 0) break;
-                    }
-
-                    //이후 연강
-                    while (true) {
-                      let flag = 0;
-                      current_timetable[index_of_day[time.day]].forEach(
-                        (element) => {
-                          const element_begin =
-                            Number(element.time.split('~')[0].split(':')[0]) *
-                              60 +
-                            Number(element.time.split('~')[0].split(':')[1]);
-                          const element_end =
-                            Number(element.time.split('~')[1].split(':')[0]) *
-                              60 +
-                            Number(element.time.split('~')[1].split(':')[1]);
-                          if (temp_end == element_begin) {
-                            count++;
-                            time_sum += element_end - element_begin;
-                            temp_end = element_end;
-                            flag = 1;
-                            return;
-                          }
-                        }
-                      );
-                      if (flag == 0) break;
-                    }
-                    if (count > btbMaxcount || time_sum > btbMaxtime) {
-                      flag = 1;
-                      return;
-                    }
-
-                    //연강 가능여부
-                    if (btbecpt == 'true') {
-                      const element_place = time.place;
-                      const queryDatabase = (place1, place2) => {
-                        return new Promise((resolve, reject) => {
-                          pool.getConnection((err, conn) => {
-                            if (err) reject(err);
-                            const exec = conn.query(
-                              `select time from (select bid from lectroom where name=?) as a,
-                                            (select bid from lectroom where name=?) as b,
-                                            distance c
-                                      where c.start=a.bid and c.end=b.bid`,
-                              [element_place, place2],
-                              (err, rows) => {
-                                conn.release();
-
-                                resolve(rows[0].time);
-                              }
-                            );
-                          });
-                        });
-                      };
-
-                      try {
-                        const walk_time = await queryDatabase(
-                          element_place,
-                          element.place
-                        );
-                        if (walk_time > 600) {
-                          flag = 1;
-                          return;
-                        }
-                      } catch (err) {}
-                    }
+              const exec = conn.query(
+                `SELECT b.prof_name, a.day, a.time, a.place, c.name
+                  FROM time_info a
+                  JOIN lecture b ON a.sid = b.sid AND a.class = b.class
+                  JOIN subject c ON a.sid = c.sid
+                  WHERE a.sid = ? AND a.class = ?;
+                  `,
+                [element.substring(0, 9), element.substring(10)],
+                (err, rows) => {
+                  conn.release();
+                  if (err) {
+                    reject(err);
+                  } else {
+                    resolve(rows);
                   }
                 }
               );
             });
+          });
+        };
 
-            //현재 과목을 current_timetable에 추가
-            times.forEach((time) => {
-              current_timetable[index_of_day[time.day]].push({
-                sid: element,
-                name: time.name,
-                time: time.time,
-                place: time.place,
-                prof_name: time.prof_name,
+        try {
+          
+          const test_begin = new Date();
+          const start_time =
+          test_begin.getMinutes * 60000 +
+          test_begin.getSeconds * 1000 +
+          test_begin.getMilliseconds;
+          //const times = await queryDatabase(element);
+          let times = [];
+          times.push({
+            prof_name: 'asefs',
+            day: '월',
+            time: '12:00~15:00',
+            place: '공5411',
+            name: 'asefsa',
+          });
+          times.push({
+            prof_name: 'asefs',
+            day: '월',
+            time: '17:00~18:00',
+            place: '공5411',
+            name: 'asefsa',
+          });
+          // console.log('times: ', times);
+          times.forEach((time) => {
+            //console.log('time: ',time)
+            const begin =
+              Number(time.time.split('~')[0].split(':')[0]) * 60 +
+              Number(time.time.split('~')[0].split(':')[1]);
+            const end =
+              Number(time.time.split('~')[1].split(':')[0]) * 60 +
+              Number(time.time.split('~')[1].split(':')[1]);
+
+            //요일공강 필터링 조건에 만족하는지 확인
+            if (freedays !== undefined) {
+              // console.log('freedays: ', freedays);
+              freedays.forEach((freeday) => {
+                //   console.log('freeday: ', freeday);
+                if (freeday == time.day) {
+                  flag = 1;
+                  return;
+                }
               });
+            }
+
+            //등하교시간 필터링 조건에 만족하는지 확인
+            if (begin < gotime || end > leavetime) {
+              flag = 1;
+              return;
+            }
+
+            //현재 시간표에서 time.day요일에 포함되어있는 과목 요소들 탐색
+            current_timetable[index_of_day[time.day]].forEach(
+              async (subject) => {
+                const sub_begin =
+                  Number(subject.time.split('~')[0].split(':')[0]) * 60 +
+                  Number(subject.time.split('~')[0].split(':')[1]);
+                const sub_end =
+                  Number(subject.time.split('~')[1].split(':')[0]) * 60 +
+                  Number(subject.time.split('~')[1].split(':')[1]);
+
+                //과목코드 겹치는지 여부확인
+                if (element == subject.sid) {
+                  flag = 1;
+                  return;
+                }
+
+                //시간이 겹치는 과목이 있는지 확인
+                if (
+                  (begin <= sub_begin && end > sub_begin) ||
+                  (begin >= sub_begin && begin < sub_end)
+                ) {
+                  flag = 1;
+                  return;
+                }
+
+                //연강필터링 조건 확인
+                if (begin == sub_end || end == sub_begin) {
+                  //이전 연강
+                  let temp_begin = begin;
+                  let temp_end = end;
+                  let count = 1,
+                    time_sum = end - begin;
+                  while (true) {
+                    let flag = 0;
+                    current_timetable[index_of_day[time.day]].forEach(
+                      (element) => {
+                        const element_begin =
+                          Number(element.time.split('~')[0].split(':')[0]) *
+                            60 +
+                          Number(element.time.split('~')[0].split(':')[1]);
+                        const element_end =
+                          Number(element.time.split('~')[1].split(':')[0]) *
+                            60 +
+                          Number(element.time.split('~')[1].split(':')[1]);
+                        if (temp_begin == element_end) {
+                          count++;
+                          time_sum += element_end - element_begin;
+                          temp_begin = element_begin;
+                          flag = 1;
+                          return;
+                        }
+                      }
+                    );
+                    if (flag == 0) break;
+                  }
+
+                  //이후 연강
+                  while (true) {
+                    let flag = 0;
+                    current_timetable[index_of_day[time.day]].forEach(
+                      (element) => {
+                        const element_begin =
+                          Number(element.time.split('~')[0].split(':')[0]) *
+                            60 +
+                          Number(element.time.split('~')[0].split(':')[1]);
+                        const element_end =
+                          Number(element.time.split('~')[1].split(':')[0]) *
+                            60 +
+                          Number(element.time.split('~')[1].split(':')[1]);
+                        if (temp_end == element_begin) {
+                          count++;
+                          time_sum += element_end - element_begin;
+                          temp_end = element_end;
+                          flag = 1;
+                          return;
+                        }
+                      }
+                    );
+                    if (flag == 0) break;
+                  }
+                  if (count > btbMaxcount || time_sum > btbMaxtime) {
+                    flag = 1;
+                    return;
+                  }
+
+                  //연강 가능여부
+                  if (btbecpt == 'true') {
+                    const element_place = time.place;
+                    const queryDatabase = (place1, place2) => {
+                      return new Promise((resolve, reject) => {
+                        pool.getConnection((err, conn) => {
+                          if (err) reject(err);
+                          const exec = conn.query(
+                            `select time from (select bid from lectroom where name=?) as a,
+                                              (select bid from lectroom where name=?) as b,
+                                              distance c
+                                        where c.start=a.bid and c.end=b.bid`,
+                            [element_place, place2],
+                            (err, rows) => {
+                              conn.release();
+
+                              resolve(rows[0].time);
+                            }
+                          );
+                        });
+                      });
+                    };
+
+                    try {
+                      const walk_time = await queryDatabase(
+                        element_place,
+                        element.place
+                      );
+                      if (walk_time > 600) {
+                        flag = 1;
+                        return;
+                      }
+                    } catch (err) {}
+                  }
+                }
+              }
+            );
+          });
+
+          //현재 과목을 current_timetable에 추가
+          times.forEach((time) => {
+            current_timetable[index_of_day[time.day]].push({
+              sid: element,
+              name: time.name,
+              time: time.time,
+              place: time.place,
+              prof_name: time.prof_name,
             });
-            if (flag == 1) return;
-
-            // const day = await queryDatabase(element);
-            // times.push(day);
-            // times = times[0];
-            // const name = times[0].name;
-            // times.forEach((element) => {
-            //   delete element.name;
-            // });
-            // // inserted_subject_list.push({
-            // //   sid: element,
-            // //   name: name,
-            // //   times: times,
-            // // });
-
-            // index_of_day['월'] = 0;
-            // index_of_day['화'] = 1;
-            // index_of_day['수'] = 2;
-            // index_of_day['목'] = 3;
-            // index_of_day['금'] = 4;
-            // index_of_day['토'] = 5;
-            // index_of_day['일'] = 6;
-            // let j;
-
-            // //현재 삽입된 과목리스트를 시간표에 추가, 과목코드가 같은과목이 있는지 여부 파악
-            // for (j = 0; j < inserted_subject_list.length - 1; j++) {
-            //   inserted_subject_list[j].times.forEach((element) => {
-            //     current_timetable[index_of_day[element.day]].push({
-            //       sid: inserted_subject_list[j].sid,
-            //       time_and_place: element,
-            //     });
-            //   });
-            //   if (
-            //     inserted_subject_list[j].sid.substring(0, 9) ==
-            //     element.substring(0, 9)
-            //   ) {
-            //     break;
-            //   }
-            // }
-            // if (j < inserted_subject_list.length - 1) {
-            //   inserted_subject_list.pop();
-            //   return;
-            // }
-            // let i;
-
-            // //현재 과목 시간별 탐색
-            // for (i = 0; i < times.length; i++) {
-            //   const begin =
-            //     Number(times[i].time.split('~')[0].split(':')[0]) * 60 +
-            //     Number(times[i].time.split('~')[0].split(':')[1]);
-            //   const end =
-            //     Number(times[i].time.split('~')[1].split(':')[0]) * 60 +
-            //     Number(times[i].time.split('~')[1].split(':')[1]);
-            //   if (
-            //     (freedays !== undefined && freedays.indexOf(times[i].day) >= 0) ||
-            //     begin < gotime ||
-            //     end > leavetime
-            //   ) {
-            //     break;
-            //   }
-
-            //   let flag = 0;
-
-            //   //현재시간표에서 times[i].day요일의 요소들 탐색
-            //   await current_timetable[index_of_day[times[i].day]].forEach(
-            //     async (element) => {
-            //       const element_begin =
-            //         Number(
-            //           element.time_and_place.time.split('~')[0].split(':')[0]
-            //         ) *
-            //           60 +
-            //         Number(element.time_and_place.time.split('~')[0].split(':')[1]);
-            //       const element_end =
-            //         Number(
-            //           element.time_and_place.time.split('~')[1].split(':')[0]
-            //         ) *
-            //           60 +
-            //         Number(element.time_and_place.time.split('~')[1].split(':')[1]);
-
-            //       //추가하려는 시간이 현재 등록되어 있는 시간과 겹칠때
-            //       if (
-            //         (begin <= element_begin && end > element_begin) ||
-            //         (begin >= element_begin && begin < element_end)
-            //       ) {
-            //         flag = 1;
-            //         return;
-            //       }
-
-            //       //연강 체크
-            //       if (begin == element_end || end == element_begin) {
-            //         //이전 연강
-            //         let temp_begin = begin;
-            //         let temp_end = end;
-            //         let count = 1,
-            //           time = end - begin;
-            //         while (true) {
-            //           let flag = 0;
-            //           current_timetable[index_of_day[times[i].day]].forEach(
-            //             (element) => {
-            //               const element_begin =
-            //                 Number(
-            //                   element.time_and_place.time
-            //                     .split('~')[0]
-            //                     .split(':')[0]
-            //                 ) *
-            //                   60 +
-            //                 Number(
-            //                   element.time_and_place.time
-            //                     .split('~')[0]
-            //                     .split(':')[1]
-            //                 );
-            //               const element_end =
-            //                 Number(
-            //                   element.time_and_place.time
-            //                     .split('~')[1]
-            //                     .split(':')[0]
-            //                 ) *
-            //                   60 +
-            //                 Number(
-            //                   element.time_and_place.time
-            //                     .split('~')[1]
-            //                     .split(':')[1]
-            //                 );
-            //               if (temp_begin == element_end) {
-            //                 count++;
-            //                 time += element_end - element_begin;
-            //                 temp_begin = element_begin;
-            //                 flag = 1;
-            //                 return;
-            //               }
-            //             }
-            //           );
-            //           if (flag == 0) break;
-            //         }
-
-            //         //이후 연강
-            //         while (true) {
-            //           let flag = 0;
-            //           current_timetable[index_of_day[times[i].day]].forEach(
-            //             (element) => {
-            //               const element_begin =
-            //                 Number(
-            //                   element.time_and_place.time
-            //                     .split('~')[0]
-            //                     .split(':')[0]
-            //                 ) *
-            //                   60 +
-            //                 Number(
-            //                   element.time_and_place.time
-            //                     .split('~')[0]
-            //                     .split(':')[1]
-            //                 );
-            //               const element_end =
-            //                 Number(
-            //                   element.time_and_place.time
-            //                     .split('~')[1]
-            //                     .split(':')[0]
-            //                 ) *
-            //                   60 +
-            //                 Number(
-            //                   element.time_and_place.time
-            //                     .split('~')[1]
-            //                     .split(':')[1]
-            //                 );
-            //               if (temp_end == element_begin) {
-            //                 count++;
-            //                 time += element_end - element_begin;
-            //                 temp_end = element_end;
-            //                 flag = 1;
-            //                 return;
-            //               }
-            //             }
-            //           );
-            //           if (flag == 0) break;
-            //         }
-            //         if (count > btbMaxcount || time > btbMaxtime) {
-            //           flag = 1;
-            //           return;
-            //         }
-
-            //         //연강 가능여부
-            //         if (btbecpt == 'true') {
-            //           const element_place = element.time_and_place.place;
-            //           const queryDatabase = (place1, place2) => {
-            //             return new Promise((resolve, reject) => {
-            //               pool.getConnection((err, conn) => {
-            //                 if (err) reject(err);
-            //                 const exec = conn.query(
-            //                   `select time from (select bid from lectroom where name=?) as a,
-            //                                   (select bid from lectroom where name=?) as b,
-            //                                   distance c
-            //                             where c.start=a.bid and c.end=b.bid`,
-            //                   [element_place, place2],
-            //                   (err, rows) => {
-            //                     conn.release();
-
-            //                     resolve(rows[0].time);
-            //                   }
-            //                 );
-            //               });
-            //             });
-            //           };
-
-            //           try {
-            //             const time = await queryDatabase(
-            //               element_place,
-            //               times[i].place
-            //             );
-            //             console.log(time);
-            //             if (time > 600) {
-            //               flag = 1;
-            //               return;
-            //             }
-            //           } catch (err) {}
-            //         }
-            //       }
-            //     }
-            //   );
-            //   if (flag == 1) {
-            //     break;
-            //   }
-            // }
-            // if (i < times.length) {
-            //   inserted_subject_list.pop();
-            //   return;
-            // }
-
-            // if (group.length - 1 != group_id) {
-            //   await selectTimetables(group, group_id + 1);
-            // } else {
-            //   //마지막 그룹에 있는과목을 current_timetable에 추가
-            //   inserted_subject_list[inserted_subject_list.length - 1].times.forEach(
-            //     (element) => {
-            //       current_timetable[index_of_day[element.day]].push({
-            //         sid: inserted_subject_list[inserted_subject_list.length - 1]
-            //           .sid,
-            //         time_and_place: element,
-            //       });
-            //     }
-            //   );
-
-            //   //강의간 시간간격 체크
-            //   current_timetable.forEach((element) => {
-            //     element.sort((a, b) =>
-            //       a.time_and_place.time.localeCompare(b.time_and_place.time)
-            //     );
-            //     for (let i = 1; i < element.length; i++) {
-            //       const before_end =
-            //         Number(
-            //           element[i - 1].time_and_place.time.split('~')[1].split(':')[0]
-            //         ) *
-            //           60 +
-            //         Number(
-            //           element[i - 1].time_and_place.time.split('~')[1].split(':')[1]
-            //         );
-
-            //       const now_begin =
-            //         Number(
-            //           element[i].time_and_place.time.split('~')[0].split(':')[0]
-            //         ) *
-            //           60 +
-            //         Number(
-            //           element[i].time_and_place.time.split('~')[0].split(':')[1]
-            //         );
-
-            //       if (
-            //         now_begin - before_end < mingap ||
-            //         now_begin - before_end > maxgap
-            //       ) {
-            //         //밑 if문의 조건에 충족하지 않도록 리스트의 요소 제거
-            //         inserted_subject_list.pop();
-            //         console.log('시간 간격 안맞음');
-            //       }
-            //     }
-            //   });
-
-            //   console.log('inserted: ', inserted_subject_list);
-            //   if (inserted_subject_list.length == group.length) {
-            //     timetables.push([]);
-            //     inserted_subject_list.forEach((element) => {
-            //       timetables[timetables.length - 1].push(element);
-            //     });
-            //     console.log('timetables: ',timetables);
-            //   }
-            // }
-            // inserted_subject_list.pop();
-          } catch (err) {
-            console.log('SQL 실행 시 오류 발생');
-            console.dir(err);
-          }
-        })
-      );
-
-      //강의간 시간간격 체크
-      current_timetable.forEach((day) => {
-        day.sort((a, b) => a.time.localeCompare(b.time));
-
-        for (let i = 1; i < day.length; i++) {
-          if (day[i].sid == day[i - 1].sid) continue;
-          const now_begin =
-            Number(day[i].time.split('~')[0].split(':')[0]) * 60 +
-            Number(day[i].time.split('~')[0].split(':')[1]);
-          const now_end =
-            Number(day[i].time.split('~')[1].split(':')[0]) * 60 +
-            Number(day[i].time.split('~')[1].split(':')[1]);
-          const bef_begin =
-            Number(day[i - 1].time.split('~')[0].split(':')[0]) * 60 +
-            Number(day[i - 1].time.split('~')[0].split(':')[1]);
-          const bef_end =
-            Number(day[i - 1].time.split('~')[1].split(':')[0]) * 60 +
-            Number(day[i - 1].time.split('~')[1].split(':')[1]);
-
-          if (now_begin - bef_end < mingap || now_begin - bef_end > maxgap) {
-            flag = 1;
-            return;
-          }
+          });
+          const test_end = new Date();
+          const end_time =
+          test_end.getMinutes * 60000 +
+          test_end.getSeconds * 1000 +
+          test_end.getMilliseconds;
+          test_times[test_idx] = test_end - test_begin;
+          if (flag == 1) return;
+        } catch (err) {
+          console.log('SQL 실행 시 오류 발생');
+          console.dir(err);
         }
-      });
-      if (flag == 1) return;
+      })
+    );
+    
+    
+    //강의간 시간간격 체크
+    current_timetable.forEach((day) => {
+      day.sort((a, b) => a.time.localeCompare(b.time));
 
-      timetables.push(current_timetable);
-      return;
-    }
-    return new Promise((resolve) => {
-      setTimeout(async () => {
-        const param3_list = inserted_subject_list;
-        //console.log('groupNum: ', groupNum, 'idx: ', idx);
-        const next_idx = Math.floor(
-          (idx - group_tree_idx[groupNum].begin_idx) /
-            group[groupNum - 1].length +
-            group_tree_idx[groupNum - 1].begin_idx
-        );
-        //console.log('nextidx: ', next_idx);
-        param3_list.push(
-          group[groupNum - 1][
-            (idx - group_tree_idx[groupNum].begin_idx) %
-              group[groupNum - 1].length
-          ]
-        );
-        await processGroup(next_idx, groupNum - 1, param3_list);
-        resolve(); // Promise 해결
-      }, 0); // 지연 시간 1초로 설정
+      for (let i = 1; i < day.length; i++) {
+        if (day[i].sid == day[i - 1].sid) continue;
+        const now_begin =
+          Number(day[i].time.split('~')[0].split(':')[0]) * 60 +
+          Number(day[i].time.split('~')[0].split(':')[1]);
+        const now_end =
+          Number(day[i].time.split('~')[1].split(':')[0]) * 60 +
+          Number(day[i].time.split('~')[1].split(':')[1]);
+        const bef_begin =
+          Number(day[i - 1].time.split('~')[0].split(':')[0]) * 60 +
+          Number(day[i - 1].time.split('~')[0].split(':')[1]);
+        const bef_end =
+          Number(day[i - 1].time.split('~')[1].split(':')[0]) * 60 +
+          Number(day[i - 1].time.split('~')[1].split(':')[1]);
+
+        if (now_begin - bef_end < mingap || now_begin - bef_end > maxgap) {
+          flag = 1;
+          return;
+        }
+      }
     });
-    //await new Promise((resolve) => setTimeout(resolve, 0));
+
+    if (flag == 1) return;
+
+    timetables.push(current_timetable);
+    //console.log('params: ', timetables);
+    return;
   }
 
   await selectTimetables();
-  //await selectTimetables(group, 0, [], 0);
-  //console.log('timetables23231: ', timetables);
+
+  //console.log('timetables23231: ', timetables.length);
+  let sum = 0;
+  test_times.forEach((n) => {
+    sum += n;
+  });
+  console.log('test_times: ', sum);
+  console.log('timetables: ', timetables);
   res.json(timetables);
 });
 
