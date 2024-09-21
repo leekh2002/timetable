@@ -490,100 +490,105 @@ function dropFun(event) {
   group.appendChild(div);
 }
 
-document.getElementById('filterForm').addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const freeday = [];
-  document.getElementsByName('freeday').forEach((element) => {
-    console.log(element.checked);
-    if (element.checked) {
-      freeday.push(element.value);
-    }
-  });
-
-  let mingap = document.getElementsByName('mingap')[0].value;
-  if (mingap == '') mingap = 0;
-
-  let maxgap = document.getElementsByName('maxgap')[0].value;
-  if (maxgap == '') maxgap = 10000;
-
-  let gotime = document.getElementsByName('gotime')[0].value;
-  if (gotime == '') gotime = '0:0';
-
-  let leavetime = document.getElementsByName('leavetime')[0].value;
-  if (leavetime == '') leavetime = '23:59';
-
-  let btbMaxtime = document.getElementsByName('btbMaxtime')[0].value;
-  if (btbMaxtime == '') btbMaxtime = 10000;
-
-  let btbMaxcount = document.getElementsByName('btbMaxcount')[0].value;
-  if (btbMaxcount == '') btbMaxcount = 100;
-  let btbecpt = document.getElementsByName('btbecpt')[0].checked;
-  let group_query = [];
-  for (let i = 1; i <= group_count; i++) {
-    let subjectArr = [];
-    document
-      .getElementById(`group${i}`)
-      .querySelectorAll('div')
-      .forEach((element) => {
-        if (element.classList.contains('placeholder')) return;
-        subjectArr.push(element.querySelectorAll('span')[1].textContent);
-      });
-    group_query.push(subjectArr);
-  }
-  const freedays = freeday
-    .map((item) => `freeday=${encodeURIComponent(item)}`)
-    .join('&');
-  const groups = group_query
-    .map((row, rowIndex) =>
-      row
-        .map((value, colIndex) => `group[${rowIndex}][${colIndex}]=${value}`)
-        .join('&')
-    )
-    .join('&');
-  const queryString = `${freedays}&mingap=${mingap}&maxgap=${maxgap}&gotime=${gotime}&leavetime=${leavetime}&btbMaxtime=${btbMaxtime}&btbMaxcount=${btbMaxcount}&btbecpt=${btbecpt}&${groups}`;
-  let results;
-
-  await fetch(`/process/filter?${queryString}`, {
-    method: 'GET',
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      console.log('data: ',data);
-      // document.querySelector('.container').classList.add('hidden');
-      // document.getElementById('generatedTimetables').style.display = 'block';
-      // document
-      //   .getElementById('generatedTimetables')
-      //   .classList.add('shift-left');
-      // results=data
-      // addLectureToTimeTable(results[0]);
+document
+  .getElementById('filterForm')
+  .addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const freeday = [];
+    document.getElementsByName('freeday').forEach((element) => {
+      console.log(element.checked);
+      if (element.checked) {
+        freeday.push(element.value);
+      }
     });
-  console.log('results: ',results)
-  
-});
+
+    let mingap = document.getElementsByName('mingap')[0].value;
+    if (mingap == '') mingap = 0;
+
+    let maxgap = document.getElementsByName('maxgap')[0].value;
+    if (maxgap == '') maxgap = 10000;
+
+    let gotime = document.getElementsByName('gotime')[0].value;
+    if (gotime == '') gotime = '0:0';
+
+    let leavetime = document.getElementsByName('leavetime')[0].value;
+    if (leavetime == '') leavetime = '23:59';
+
+    let btbMaxtime = document.getElementsByName('btbMaxtime')[0].value;
+    if (btbMaxtime == '') btbMaxtime = 10000;
+
+    let btbMaxcount = document.getElementsByName('btbMaxcount')[0].value;
+    if (btbMaxcount == '') btbMaxcount = 100;
+    let btbecpt = document.getElementsByName('btbecpt')[0].checked;
+    let group_query = [];
+    for (let i = 1; i <= group_count; i++) {
+      let subjectArr = [];
+      document
+        .getElementById(`group${i}`)
+        .querySelectorAll('div')
+        .forEach((element) => {
+          if (element.classList.contains('placeholder')) return;
+          subjectArr.push(element.querySelectorAll('span')[1].textContent);
+        });
+      group_query.push(subjectArr);
+    }
+    const freedays = freeday
+      .map((item) => `freeday=${encodeURIComponent(item)}`)
+      .join('&');
+    const groups = group_query
+      .map((row, rowIndex) =>
+        row
+          .map((value, colIndex) => `group[${rowIndex}][${colIndex}]=${value}`)
+          .join('&')
+      )
+      .join('&');
+    const queryString = `${freedays}&mingap=${mingap}&maxgap=${maxgap}&gotime=${gotime}&leavetime=${leavetime}&btbMaxtime=${btbMaxtime}&btbMaxcount=${btbMaxcount}&btbecpt=${btbecpt}&${groups}`;
+    let results;
+
+    await fetch(`/process/filter?${queryString}`, {
+      method: 'GET',
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        document.querySelector('.container').classList.add('hidden');
+        document.getElementById('generatedTimetables').style.display = 'block';
+        document
+          .getElementById('generatedTimetables')
+          .classList.add('shift-left');
+        results = data;
+        console.log('data: ', results[0]);
+        addLectureToTimeTable(results[0]);
+      });
+    console.log('resulasfsaefts: ', results);
+  });
 
 function addLectureToTimeTable(lectures) {
   let color = 0;
-
+  console.log('lectures: ', lectures);
   lectures.forEach((lecture) => {
-    lecture.times.forEach((time) => {
+    console.log('lecture: ',lecture)
+    lecture.forEach((time) => {
+      console.log('time: ',time);
       const begin =
         Number(time.time.split('~')[0].split(':')[0] - 8) * 60 +
         Number(time.time.split('~')[0].split(':')[1]);
       const end =
         Number(time.time.split('~')[1].split(':')[0] - 8) * 60 +
         Number(time.time.split('~')[1].split(':')[1]);
+        console.log(document
+          .querySelector(`[data-day2='${dayDict[time.day]}']`))
       const col = document
         .querySelector(`[data-day2='${dayDict[time.day]}']`)
         .querySelector('.cols2');
       const div = document.createElement('div');
-      const p=document.createElement('p');
-      const em=document.createElement('em');
-      const span=document.createElement('span');
-      const h5=document.createElement('h5');
+      const p = document.createElement('p');
+      const em = document.createElement('em');
+      const span = document.createElement('span');
+      const h5 = document.createElement('h5');
 
-      h5.textContent=lecture.name;
-      em.textContent=time.prof_name;
-      span.textContent=time.place;
+      h5.textContent = time.name;
+      em.textContent = time.prof_name;
+      span.textContent = time.place;
       p.appendChild(em);
       p.appendChild(span);
 
@@ -591,7 +596,7 @@ function addLectureToTimeTable(lectures) {
       div.style.top = `${(begin / 960) * 800}px`;
       div.style.height = `${((end - begin) / 960) * 800}px`;
       div.className += `color${color}`;
-      
+
       div.appendChild(h5);
       div.appendChild(p);
       col.appendChild(div);

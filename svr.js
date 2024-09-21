@@ -6,7 +6,7 @@ const dbconfig = require('./config/dbconfig.json');
 const { time } = require('console');
 
 const pool = mysql.createPool({
-  connectionLimit: 10,
+  connectionLimit: 100,
   host: dbconfig.host,
   user: dbconfig.user,
   password: dbconfig.password,
@@ -215,8 +215,8 @@ app.get('/process/filter', async (req, res) => {
   const subject_info = [];
   let test_times = [];
   let group_tree_idx = [];
-  //const inserted_subject_list = [];
   let timetables = [];
+  let distance = {};
 
   for (const element of group) {
     subject_info.push([]);
@@ -228,7 +228,7 @@ app.get('/process/filter', async (req, res) => {
               reject(err);
             }
             const exec = conn.query(
-              `SELECT b.prof_name, a.day, a.time, a.place, c.name
+              `SELECT a.sid, b.prof_name, a.day, a.time, a.place, c.name
                 FROM time_info a
                 JOIN lecture b ON a.sid = b.sid AND a.class = b.class
                 JOIN subject c ON a.sid = c.sid
@@ -254,22 +254,18 @@ app.get('/process/filter', async (req, res) => {
     }
   }
 
-
-  //(시작 건물, 도착 건물) : 시간 배열 생성해야함.  
-  const queryDatabase = (element) => {
+  //(시작 건물, 도착 건물) : 시간 배열 생성해야함.
+  const queryDatabase = () => {
     return new Promise((resolve, reject) => {
       pool.getConnection((err, conn) => {
         if (err) {
           reject(err);
         }
         const exec = conn.query(
-          `SELECT b.prof_name, a.day, a.time, a.place, c.name
-            FROM time_info a
-            JOIN lecture b ON a.sid = b.sid AND a.class = b.class
-            JOIN subject c ON a.sid = c.sid
-            WHERE a.sid = ? AND a.class = ?;
-            `,
-          [element.substring(0, 9), element.substring(10)],
+          `select a.name as start, b.name as end ,distance.time
+          from distance, (select distinct bid, name from lectroom) as a, (select distinct bid, name from lectroom) as b
+          where a.bid=distance.start and b.bid=distance.end
+          order by a.name;`,
           (err, rows) => {
             conn.release();
             if (err) {
@@ -283,12 +279,28 @@ app.get('/process/filter', async (req, res) => {
     });
   };
   try {
-    const times = await queryDatabase(el);
-    subject_info[subject_info.length - 1].push(times);
-  } catch (err) {}
+    const distances = await queryDatabase();
+    for (let i = 0; i < distances.length; ) {
+      let end_dict = {};
+      let j;
+      for (j = i; j < distances.length; j++) {
+        end_dict[distances[j].end] = distances[j].time;
+        if (
+          j == distances.length - 1 ||
+          distances[j].start != distances[j + 1].start
+        ) {
+          break;
+        }
+      }
+      distance[distances[i].start] = end_dict;
+      i += j-i + 1;
+    }
+  } catch (err) {
+    console.log('SQL 실행시 오류발생');
+    console.dir(err);
+  }
 
-
-  console.log('subject_info: ', subject_info);
+  console.log('인0456:', distance['인0456']['403']);
   let i = 0;
   group_tree_idx.push({
     begin_idx: 0,
@@ -304,7 +316,7 @@ app.get('/process/filter', async (req, res) => {
     k *= group[i].length;
   }
   console.log('idx: ', group_tree_idx);
-  async function selectTimetables() {
+  function selectTimetables() {
     const promises = [];
 
     for (
@@ -313,26 +325,17 @@ app.get('/process/filter', async (req, res) => {
       i++
     ) {
       test_times.push([]);
-      await processGroup(
+      processGroup(
         i,
         group.length,
         [],
         i - group_tree_idx[group.length].begin_idx
       );
-      // promises.push(
-      //   processGroup(
-      //     i,
-      //     group.length,
-      //     [],
-      //     i - group_tree_idx[group.length].begin_idx
-      //   )
-      // );
+      
     }
-    //await Promise.all(promises);
-    console.log('asefasegesafsaegsafsef');
   }
 
-  async function processGroup(idx, groupNum, inserted_subject_list, test_idx) {
+  function processGroup(idx, groupNum, inserted_subject_list, test_idx) {
     const param3_list = inserted_subject_list;
     const next_idx = Math.floor(
       (idx - group_tree_idx[groupNum].begin_idx) / group[groupNum - 1].length +
@@ -341,14 +344,14 @@ app.get('/process/filter', async (req, res) => {
 
     while (idx != 0) {
       param3_list.push(
-        group[groupNum - 1][
+        subject_info[groupNum - 1][
           (idx - group_tree_idx[groupNum].begin_idx) %
             group[groupNum - 1].length
         ]
       );
       idx = Math.floor(
         (idx - group_tree_idx[groupNum].begin_idx) /
-          group[groupNum - 1].length +
+          subject_info[groupNum - 1].length +
           group_tree_idx[groupNum - 1].begin_idx
       );
       groupNum--;
@@ -363,237 +366,157 @@ app.get('/process/filter', async (req, res) => {
     index_of_day['토'] = 5;
     index_of_day['일'] = 6;
     let flag = 0;
-    
-    await Promise.all(
-      param3_list.map(async (element) => {
-        let times = [];
-        const queryDatabase = (element) => {
-          return new Promise((resolve, reject) => {
-            pool.getConnection((err, conn) => {
-              if (err) {
-                reject(err);
-              }
-              const exec = conn.query(
-                `SELECT b.prof_name, a.day, a.time, a.place, c.name
-                  FROM time_info a
-                  JOIN lecture b ON a.sid = b.sid AND a.class = b.class
-                  JOIN subject c ON a.sid = c.sid
-                  WHERE a.sid = ? AND a.class = ?;
-                  `,
-                [element.substring(0, 9), element.substring(10)],
-                (err, rows) => {
-                  conn.release();
-                  if (err) {
-                    reject(err);
-                  } else {
-                    resolve(rows);
-                  }
-                }
-              );
-            });
-          });
-        };
 
-        try {
-          
-          const test_begin = new Date();
-          const start_time =
-          test_begin.getMinutes * 60000 +
-          test_begin.getSeconds * 1000 +
-          test_begin.getMilliseconds;
-          //const times = await queryDatabase(element);
-          let times = [];
-          times.push({
-            prof_name: 'asefs',
-            day: '월',
-            time: '12:00~15:00',
-            place: '공5411',
-            name: 'asefsa',
-          });
-          times.push({
-            prof_name: 'asefs',
-            day: '월',
-            time: '17:00~18:00',
-            place: '공5411',
-            name: 'asefsa',
-          });
-          // console.log('times: ', times);
-          times.forEach((time) => {
-            //console.log('time: ',time)
-            const begin =
-              Number(time.time.split('~')[0].split(':')[0]) * 60 +
-              Number(time.time.split('~')[0].split(':')[1]);
-            const end =
-              Number(time.time.split('~')[1].split(':')[0]) * 60 +
-              Number(time.time.split('~')[1].split(':')[1]);
+    //console.log('param3:', param3_list);
 
-            //요일공강 필터링 조건에 만족하는지 확인
-            if (freedays !== undefined) {
-              // console.log('freedays: ', freedays);
-              freedays.forEach((freeday) => {
-                //   console.log('freeday: ', freeday);
-                if (freeday == time.day) {
-                  flag = 1;
-                  return;
-                }
-              });
+    param3_list.map(async (subject) => {
+      let times = [];
+
+      subject.forEach((time) => {
+        //console.log('time: ',time)
+        const begin =
+          Number(time.time.split('~')[0].split(':')[0]) * 60 +
+          Number(time.time.split('~')[0].split(':')[1]);
+        const end =
+          Number(time.time.split('~')[1].split(':')[0]) * 60 +
+          Number(time.time.split('~')[1].split(':')[1]);
+
+        //요일공강 필터링 조건에 만족하는지 확인
+        if (freedays !== undefined) {
+          // console.log('freedays: ', freedays);
+          freedays.forEach((freeday) => {
+            //   console.log('freeday: ', freeday);
+            if (freeday == time.day) {
+              // console.log('요일공강 안맞음');
+              flag = 1;
+              return;
             }
+          });
+        }
 
-            //등하교시간 필터링 조건에 만족하는지 확인
-            if (begin < gotime || end > leavetime) {
+        //등하교시간 필터링 조건에 만족하는지 확인
+        if (begin < gotime || end > leavetime) {
+          //console.log('등하교 안맞음');
+          flag = 1;
+          return;
+        }
+
+        //현재 시간표에서 time.day요일에 포함되어있는 과목 요소들 탐색
+        current_timetable[index_of_day[time.day]].forEach(
+          async (subject_in_timetable) => {
+            const sub_begin =
+              Number(subject_in_timetable.time.split('~')[0].split(':')[0]) *
+                60 +
+              Number(subject_in_timetable.time.split('~')[0].split(':')[1]);
+            const sub_end =
+              Number(subject_in_timetable.time.split('~')[1].split(':')[0]) *
+                60 +
+              Number(subject_in_timetable.time.split('~')[1].split(':')[1]);
+
+            //과목코드 겹치는지 여부확인
+            if (subject.sid == subject_in_timetable.sid) {
+              //console.log('과목코드 겹침');
               flag = 1;
               return;
             }
 
-            //현재 시간표에서 time.day요일에 포함되어있는 과목 요소들 탐색
-            current_timetable[index_of_day[time.day]].forEach(
-              async (subject) => {
-                const sub_begin =
-                  Number(subject.time.split('~')[0].split(':')[0]) * 60 +
-                  Number(subject.time.split('~')[0].split(':')[1]);
-                const sub_end =
-                  Number(subject.time.split('~')[1].split(':')[0]) * 60 +
-                  Number(subject.time.split('~')[1].split(':')[1]);
+            //시간이 겹치는 과목이 있는지 확인
+            if (
+              (begin <= sub_begin && end > sub_begin) ||
+              (begin >= sub_begin && begin < sub_end)
+            ) {
+              //console.log('시간 겹침');
+              flag = 1;
+              return;
+            }
 
-                //과목코드 겹치는지 여부확인
-                if (element == subject.sid) {
-                  flag = 1;
-                  return;
-                }
-
-                //시간이 겹치는 과목이 있는지 확인
-                if (
-                  (begin <= sub_begin && end > sub_begin) ||
-                  (begin >= sub_begin && begin < sub_end)
-                ) {
-                  flag = 1;
-                  return;
-                }
-
-                //연강필터링 조건 확인
-                if (begin == sub_end || end == sub_begin) {
-                  //이전 연강
-                  let temp_begin = begin;
-                  let temp_end = end;
-                  let count = 1,
-                    time_sum = end - begin;
-                  while (true) {
-                    let flag = 0;
-                    current_timetable[index_of_day[time.day]].forEach(
-                      (element) => {
-                        const element_begin =
-                          Number(element.time.split('~')[0].split(':')[0]) *
-                            60 +
-                          Number(element.time.split('~')[0].split(':')[1]);
-                        const element_end =
-                          Number(element.time.split('~')[1].split(':')[0]) *
-                            60 +
-                          Number(element.time.split('~')[1].split(':')[1]);
-                        if (temp_begin == element_end) {
-                          count++;
-                          time_sum += element_end - element_begin;
-                          temp_begin = element_begin;
-                          flag = 1;
-                          return;
-                        }
-                      }
-                    );
-                    if (flag == 0) break;
-                  }
-
-                  //이후 연강
-                  while (true) {
-                    let flag = 0;
-                    current_timetable[index_of_day[time.day]].forEach(
-                      (element) => {
-                        const element_begin =
-                          Number(element.time.split('~')[0].split(':')[0]) *
-                            60 +
-                          Number(element.time.split('~')[0].split(':')[1]);
-                        const element_end =
-                          Number(element.time.split('~')[1].split(':')[0]) *
-                            60 +
-                          Number(element.time.split('~')[1].split(':')[1]);
-                        if (temp_end == element_begin) {
-                          count++;
-                          time_sum += element_end - element_begin;
-                          temp_end = element_end;
-                          flag = 1;
-                          return;
-                        }
-                      }
-                    );
-                    if (flag == 0) break;
-                  }
-                  if (count > btbMaxcount || time_sum > btbMaxtime) {
+            //연강필터링 조건 확인
+            if (begin == sub_end || end == sub_begin) {
+              //이전 연강
+              let temp_begin = begin;
+              let temp_end = end;
+              let count = 1,
+                time_sum = end - begin;
+              while (true) {
+                let flag = 0;
+                current_timetable[index_of_day[time.day]].forEach((element) => {
+                  const element_begin =
+                    Number(element.time.split('~')[0].split(':')[0]) * 60 +
+                    Number(element.time.split('~')[0].split(':')[1]);
+                  const element_end =
+                    Number(element.time.split('~')[1].split(':')[0]) * 60 +
+                    Number(element.time.split('~')[1].split(':')[1]);
+                  if (temp_begin == element_end) {
+                    count++;
+                    time_sum += element_end - element_begin;
+                    temp_begin = element_begin;
                     flag = 1;
                     return;
                   }
+                });
+                if (flag == 0) break;
+              }
 
-                  //연강 가능여부
-                  if (btbecpt == 'true') {
-                    const element_place = time.place;
-                    const queryDatabase = (place1, place2) => {
-                      return new Promise((resolve, reject) => {
-                        pool.getConnection((err, conn) => {
-                          if (err) reject(err);
-                          const exec = conn.query(
-                            `select time from (select bid from lectroom where name=?) as a,
-                                              (select bid from lectroom where name=?) as b,
-                                              distance c
-                                        where c.start=a.bid and c.end=b.bid`,
-                            [element_place, place2],
-                            (err, rows) => {
-                              conn.release();
-
-                              resolve(rows[0].time);
-                            }
-                          );
-                        });
-                      });
-                    };
-
-                    try {
-                      const walk_time = await queryDatabase(
-                        element_place,
-                        element.place
-                      );
-                      if (walk_time > 600) {
-                        flag = 1;
-                        return;
-                      }
-                    } catch (err) {}
+              //이후 연강
+              while (true) {
+                let flag = 0;
+                current_timetable[index_of_day[time.day]].forEach((element) => {
+                  const element_begin =
+                    Number(element.time.split('~')[0].split(':')[0]) * 60 +
+                    Number(element.time.split('~')[0].split(':')[1]);
+                  const element_end =
+                    Number(element.time.split('~')[1].split(':')[0]) * 60 +
+                    Number(element.time.split('~')[1].split(':')[1]);
+                  if (temp_end == element_begin) {
+                    count++;
+                    time_sum += element_end - element_begin;
+                    temp_end = element_end;
+                    flag = 1;
+                    return;
                   }
+                });
+                if (flag == 0) break;
+              }
+              if (count > btbMaxcount || time_sum > btbMaxtime) {
+                //console.log('연강조건 안맞음');
+                flag = 1;
+                return;
+              }
+
+              //연강 가능여부
+              if (btbecpt == 'true') {
+                const element_place = time.place;
+                //console.log('subject.place: ',subject.place,' subject_in_timetable.place: ',subject_in_timetable.place)
+                const walk_time =
+                  distance[time.place][subject_in_timetable.place];
+                if (walk_time > 600) {
+                  // console.log('연강 불가능');
+                  flag = 1;
+                  return;
                 }
               }
-            );
-          });
+            }
+          }
+        );
+      });
+      
+      if (flag == 1) return;
+      //현재 과목을 current_timetable에 추가
+      subject.forEach((time) => {
+        current_timetable[index_of_day[time.day]].push({
+          sid: time.sid,
+          time: time.time,
+          place: time.place,
+          prof_name: time.prof_name,
+        });
+      });
+    });
 
-          //현재 과목을 current_timetable에 추가
-          times.forEach((time) => {
-            current_timetable[index_of_day[time.day]].push({
-              sid: element,
-              name: time.name,
-              time: time.time,
-              place: time.place,
-              prof_name: time.prof_name,
-            });
-          });
-          const test_end = new Date();
-          const end_time =
-          test_end.getMinutes * 60000 +
-          test_end.getSeconds * 1000 +
-          test_end.getMilliseconds;
-          test_times[test_idx] = test_end - test_begin;
-          if (flag == 1) return;
-        } catch (err) {
-          console.log('SQL 실행 시 오류 발생');
-          console.dir(err);
-        }
-      })
-    );
-    
-    
+    const test_begin = new Date();
+    const start_time =
+      test_begin.getMinutes * 60000 +
+      test_begin.getSeconds * 1000 +
+      test_begin.getMilliseconds;
     //강의간 시간간격 체크
     current_timetable.forEach((day) => {
       day.sort((a, b) => a.time.localeCompare(b.time));
@@ -620,14 +543,21 @@ app.get('/process/filter', async (req, res) => {
       }
     });
 
+    const test_end = new Date();
+    const end_time =
+      test_end.getMinutes * 60000 +
+      test_end.getSeconds * 1000 +
+      test_end.getMilliseconds;
+    test_times[test_idx] = test_end - test_begin;
+    // console.log('flag=', flag);
     if (flag == 1) return;
 
-    timetables.push(current_timetable);
+    timetables.push(param3_list);
     //console.log('params: ', timetables);
     return;
   }
 
-  await selectTimetables();
+  selectTimetables();
 
   //console.log('timetables23231: ', timetables.length);
   let sum = 0;
@@ -635,7 +565,7 @@ app.get('/process/filter', async (req, res) => {
     sum += n;
   });
   console.log('test_times: ', sum);
-  console.log('timetables: ', timetables);
+  //console.log('timetables: ', timetables);
   res.json(timetables);
 });
 
