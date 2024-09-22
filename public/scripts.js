@@ -8,6 +8,8 @@ let color_num = 0;
 let displayed_element = [];
 let sid_set = [];
 const dayDict = {};
+let results;
+let now_results_idx = 0;
 dayDict['월'] = '1';
 dayDict['화'] = '2';
 dayDict['수'] = '3';
@@ -543,7 +545,6 @@ document
       )
       .join('&');
     const queryString = `${freedays}&mingap=${mingap}&maxgap=${maxgap}&gotime=${gotime}&leavetime=${leavetime}&btbMaxtime=${btbMaxtime}&btbMaxcount=${btbMaxcount}&btbecpt=${btbecpt}&${groups}`;
-    let results;
 
     await fetch(`/process/filter?${queryString}`, {
       method: 'GET',
@@ -556,27 +557,60 @@ document
           .getElementById('generatedTimetables')
           .classList.add('shift-left');
         results = data;
+        document.querySelector('.now-page').textContent = '1';
+        document.querySelector('.all-pages').textContent = `${results.length}`;
         console.log('data: ', results[0]);
+        document.querySelectorAll('.col2').forEach((element) => {
+          element.remove();
+        });
         addLectureToTimeTable(results[0]);
       });
     console.log('resulasfsaefts: ', results);
   });
 
+document
+  .querySelector('.generated-timetables-back')
+  .addEventListener('click', (event) => {
+    const now_page = document.querySelector('.now-page');
+
+    if (now_page.textContent != '1') {
+      now_page.textContent = `${Number(now_page.textContent) - 1}`;
+      console.log('cols2: ', document.querySelectorAll('.cols2'));
+      document.querySelectorAll('.col2').forEach((element) => {
+        element.remove();
+      });
+      addLectureToTimeTable(results[Number(now_page.textContent)-1])
+    }
+  });
+
+document.querySelector('.generated-timetables-forward').addEventListener('click', (event)=>{
+  const now_page = document.querySelector('.now-page');
+  const all_pages = document.querySelector('.all-pages');
+  
+  if (now_page.textContent != all_pages.textContent) {
+    now_page.textContent = `${Number(now_page.textContent) + 1}`;
+    console.log('cols2: ', document.querySelectorAll('.cols2'));
+    document.querySelectorAll('.col2').forEach((element) => {
+      element.remove();
+    });
+    addLectureToTimeTable(results[Number(now_page.textContent)-1])
+  }
+})
+
 function addLectureToTimeTable(lectures) {
   let color = 0;
   console.log('lectures: ', lectures);
   lectures.forEach((lecture) => {
-    console.log('lecture: ',lecture)
+    console.log('lecture: ', lecture);
     lecture.forEach((time) => {
-      console.log('time: ',time);
+      console.log('time: ', time);
       const begin =
         Number(time.time.split('~')[0].split(':')[0] - 8) * 60 +
         Number(time.time.split('~')[0].split(':')[1]);
       const end =
         Number(time.time.split('~')[1].split(':')[0] - 8) * 60 +
         Number(time.time.split('~')[1].split(':')[1]);
-        console.log(document
-          .querySelector(`[data-day2='${dayDict[time.day]}']`))
+      console.log(document.querySelector(`[data-day2='${dayDict[time.day]}']`));
       const col = document
         .querySelector(`[data-day2='${dayDict[time.day]}']`)
         .querySelector('.cols2');

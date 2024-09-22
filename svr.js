@@ -254,7 +254,7 @@ app.get('/process/filter', async (req, res) => {
     }
   }
 
-  //(시작 건물, 도착 건물) : 시간 배열 생성해야함.
+  //(시작 건물, 도착 건물) : 시간 배열 생성
   const queryDatabase = () => {
     return new Promise((resolve, reject) => {
       pool.getConnection((err, conn) => {
@@ -293,14 +293,13 @@ app.get('/process/filter', async (req, res) => {
         }
       }
       distance[distances[i].start] = end_dict;
-      i += j-i + 1;
+      i += j - i + 1;
     }
   } catch (err) {
     console.log('SQL 실행시 오류발생');
     console.dir(err);
   }
 
-  console.log('인0456:', distance['인0456']['403']);
   let i = 0;
   group_tree_idx.push({
     begin_idx: 0,
@@ -316,257 +315,138 @@ app.get('/process/filter', async (req, res) => {
     k *= group[i].length;
   }
   console.log('idx: ', group_tree_idx);
+
   function selectTimetables() {
     const promises = [];
 
     for (
-      i = group_tree_idx[group.length].begin_idx;
+      let i = group_tree_idx[group.length].begin_idx;
       i <= group_tree_idx[group.length].end_idx;
       i++
     ) {
-      test_times.push([]);
-      processGroup(
-        i,
-        group.length,
-        [],
-        i - group_tree_idx[group.length].begin_idx
+      const worker = new Worker('./processGroupWorker.js', {
+        workerData: {
+          idx: i,
+          groupNum: group.length,
+          param3_list: [], // 여기에 실제로 필요한 데이터를 넣으세요
+          freedays,
+          subject_info,
+          distance,
+          mingap,
+          maxgap,
+          gotime,
+          leavetime,
+          btbMaxtime,
+          btbMaxcount,
+          btbecpt,
+        },
+      });
+
+      promises.push(
+        new Promise((resolve) => {
+          worker.on('message', (result) => {
+            timetables.push(result.timetable);
+            test_times.push(result.executionTime);
+            resolve();
+          });
+
+          worker.on('error', (error) => {
+            console.error(error);
+            resolve();
+          });
+        })
       );
-      
     }
+
+    // 모든 프로미스가 완료될 때까지 기다림
   }
 
-  function processGroup(idx, groupNum, inserted_subject_list, test_idx) {
-    const param3_list = inserted_subject_list;
-    const next_idx = Math.floor(
-      (idx - group_tree_idx[groupNum].begin_idx) / group[groupNum - 1].length +
-        group_tree_idx[groupNum - 1].begin_idx
+  const { Worker, workerData } = require('worker_threads');
+  const threadCount = Math.ceil(
+    (group_tree_idx[group.length].end_idx -
+      group_tree_idx[group.length].begin_idx) /
+      13500
+  );
+  const threads = new Set();
+  const range = Math.ceil(
+    (group_tree_idx[group.length].end_idx -
+      group_tree_idx[group.length].begin_idx) /
+      threadCount
+  );
+  let start = group_tree_idx[group.length].begin_idx;
+  console.log(
+    'group_tree_idx[group.length].end_idx:',
+    group_tree_idx[group.length].end_idx
+  );
+  for (let i = 0; i < threadCount - 1; i++) {
+    threads.add(
+      new Worker('./processGroupWorker.js', {
+        workerData: {
+          start: start,
+          end: start + range,
+          freedays: freedays,
+          subject_info: subject_info,
+          distance: distance,
+          mingap: mingap,
+          maxgap: maxgap,
+          gotime: gotime,
+          leavetime: leavetime,
+          btbMaxtime: btbMaxtime,
+          btbMaxcount: btbMaxcount,
+          btbecpt: btbecpt,
+          group: group,
+          group_tree_idx: group_tree_idx,
+        },
+      })
     );
+    start += range + 1;
+  }
+  threads.add(
+    new Worker('./processGroupWorker.js', {
+      workerData: {
+        start: start,
+        end: group_tree_idx[group.length].end_idx,
+        freedays: freedays,
+        subject_info: subject_info,
+        distance: distance,
+        mingap: mingap,
+        maxgap: maxgap,
+        gotime: gotime,
+        leavetime: leavetime,
+        btbMaxtime: btbMaxtime,
+        btbMaxcount: btbMaxcount,
+        btbecpt: btbecpt,
+        group: group,
+        group_tree_idx: group_tree_idx,
+      },
+    })
+  );
 
-    while (idx != 0) {
-      param3_list.push(
-        subject_info[groupNum - 1][
-          (idx - group_tree_idx[groupNum].begin_idx) %
-            group[groupNum - 1].length
-        ]
-      );
-      idx = Math.floor(
-        (idx - group_tree_idx[groupNum].begin_idx) /
-          subject_info[groupNum - 1].length +
-          group_tree_idx[groupNum - 1].begin_idx
-      );
-      groupNum--;
-    }
-    let current_timetable = [[], [], [], [], [], [], []];
-    const index_of_day = {};
-    index_of_day['월'] = 0;
-    index_of_day['화'] = 1;
-    index_of_day['수'] = 2;
-    index_of_day['목'] = 3;
-    index_of_day['금'] = 4;
-    index_of_day['토'] = 5;
-    index_of_day['일'] = 6;
-    let flag = 0;
-
-    //console.log('param3:', param3_list);
-
-    param3_list.map(async (subject) => {
-      let times = [];
-
-      subject.forEach((time) => {
-        //console.log('time: ',time)
-        const begin =
-          Number(time.time.split('~')[0].split(':')[0]) * 60 +
-          Number(time.time.split('~')[0].split(':')[1]);
-        const end =
-          Number(time.time.split('~')[1].split(':')[0]) * 60 +
-          Number(time.time.split('~')[1].split(':')[1]);
-
-        //요일공강 필터링 조건에 만족하는지 확인
-        if (freedays !== undefined) {
-          // console.log('freedays: ', freedays);
-          freedays.forEach((freeday) => {
-            //   console.log('freeday: ', freeday);
-            if (freeday == time.day) {
-              // console.log('요일공강 안맞음');
-              flag = 1;
-              return;
-            }
-          });
-        }
-
-        //등하교시간 필터링 조건에 만족하는지 확인
-        if (begin < gotime || end > leavetime) {
-          //console.log('등하교 안맞음');
-          flag = 1;
-          return;
-        }
-
-        //현재 시간표에서 time.day요일에 포함되어있는 과목 요소들 탐색
-        current_timetable[index_of_day[time.day]].forEach(
-          async (subject_in_timetable) => {
-            const sub_begin =
-              Number(subject_in_timetable.time.split('~')[0].split(':')[0]) *
-                60 +
-              Number(subject_in_timetable.time.split('~')[0].split(':')[1]);
-            const sub_end =
-              Number(subject_in_timetable.time.split('~')[1].split(':')[0]) *
-                60 +
-              Number(subject_in_timetable.time.split('~')[1].split(':')[1]);
-
-            //과목코드 겹치는지 여부확인
-            if (subject.sid == subject_in_timetable.sid) {
-              //console.log('과목코드 겹침');
-              flag = 1;
-              return;
-            }
-
-            //시간이 겹치는 과목이 있는지 확인
-            if (
-              (begin <= sub_begin && end > sub_begin) ||
-              (begin >= sub_begin && begin < sub_end)
-            ) {
-              //console.log('시간 겹침');
-              flag = 1;
-              return;
-            }
-
-            //연강필터링 조건 확인
-            if (begin == sub_end || end == sub_begin) {
-              //이전 연강
-              let temp_begin = begin;
-              let temp_end = end;
-              let count = 1,
-                time_sum = end - begin;
-              while (true) {
-                let flag = 0;
-                current_timetable[index_of_day[time.day]].forEach((element) => {
-                  const element_begin =
-                    Number(element.time.split('~')[0].split(':')[0]) * 60 +
-                    Number(element.time.split('~')[0].split(':')[1]);
-                  const element_end =
-                    Number(element.time.split('~')[1].split(':')[0]) * 60 +
-                    Number(element.time.split('~')[1].split(':')[1]);
-                  if (temp_begin == element_end) {
-                    count++;
-                    time_sum += element_end - element_begin;
-                    temp_begin = element_begin;
-                    flag = 1;
-                    return;
-                  }
-                });
-                if (flag == 0) break;
-              }
-
-              //이후 연강
-              while (true) {
-                let flag = 0;
-                current_timetable[index_of_day[time.day]].forEach((element) => {
-                  const element_begin =
-                    Number(element.time.split('~')[0].split(':')[0]) * 60 +
-                    Number(element.time.split('~')[0].split(':')[1]);
-                  const element_end =
-                    Number(element.time.split('~')[1].split(':')[0]) * 60 +
-                    Number(element.time.split('~')[1].split(':')[1]);
-                  if (temp_end == element_begin) {
-                    count++;
-                    time_sum += element_end - element_begin;
-                    temp_end = element_end;
-                    flag = 1;
-                    return;
-                  }
-                });
-                if (flag == 0) break;
-              }
-              if (count > btbMaxcount || time_sum > btbMaxtime) {
-                //console.log('연강조건 안맞음');
-                flag = 1;
-                return;
-              }
-
-              //연강 가능여부
-              if (btbecpt == 'true') {
-                const element_place = time.place;
-                //console.log('subject.place: ',subject.place,' subject_in_timetable.place: ',subject_in_timetable.place)
-                const walk_time =
-                  distance[time.place][subject_in_timetable.place];
-                if (walk_time > 600) {
-                  // console.log('연강 불가능');
-                  flag = 1;
-                  return;
-                }
-              }
-            }
-          }
-        );
-      });
-      
-      if (flag == 1) return;
-      //현재 과목을 current_timetable에 추가
-      subject.forEach((time) => {
-        current_timetable[index_of_day[time.day]].push({
-          sid: time.sid,
-          time: time.time,
-          place: time.place,
-          prof_name: time.prof_name,
-        });
-      });
+  for (let worker of threads) {
+    worker.on('message', (value) => {
+      Array.prototype.push.apply(timetables, value);
+      //console.log('results: ', value);
     });
 
-    const test_begin = new Date();
-    const start_time =
-      test_begin.getMinutes * 60000 +
-      test_begin.getSeconds * 1000 +
-      test_begin.getMilliseconds;
-    //강의간 시간간격 체크
-    current_timetable.forEach((day) => {
-      day.sort((a, b) => a.time.localeCompare(b.time));
-
-      for (let i = 1; i < day.length; i++) {
-        if (day[i].sid == day[i - 1].sid) continue;
-        const now_begin =
-          Number(day[i].time.split('~')[0].split(':')[0]) * 60 +
-          Number(day[i].time.split('~')[0].split(':')[1]);
-        const now_end =
-          Number(day[i].time.split('~')[1].split(':')[0]) * 60 +
-          Number(day[i].time.split('~')[1].split(':')[1]);
-        const bef_begin =
-          Number(day[i - 1].time.split('~')[0].split(':')[0]) * 60 +
-          Number(day[i - 1].time.split('~')[0].split(':')[1]);
-        const bef_end =
-          Number(day[i - 1].time.split('~')[1].split(':')[0]) * 60 +
-          Number(day[i - 1].time.split('~')[1].split(':')[1]);
-
-        if (now_begin - bef_end < mingap || now_begin - bef_end > maxgap) {
-          flag = 1;
-          return;
-        }
+    worker.on('exit', (value) => {
+      threads.delete(worker); // set에서 쓰레드 삭제
+      if (threads.size === 0) {
+        // set이 모두 비웠졌을 경우, 워커쓰레드가 모두 끝난거니까
+        console.log('워커 끝~');
+        res.json(timetables);
       }
     });
-
-    const test_end = new Date();
-    const end_time =
-      test_end.getMinutes * 60000 +
-      test_end.getSeconds * 1000 +
-      test_end.getMilliseconds;
-    test_times[test_idx] = test_end - test_begin;
-    // console.log('flag=', flag);
-    if (flag == 1) return;
-
-    timetables.push(param3_list);
-    //console.log('params: ', timetables);
-    return;
   }
-
-  selectTimetables();
+  //selectTimetables();
 
   //console.log('timetables23231: ', timetables.length);
   let sum = 0;
   test_times.forEach((n) => {
     sum += n;
   });
-  console.log('test_times: ', sum);
+  //console.log('test_times: ', sum);
   //console.log('timetables: ', timetables);
-  res.json(timetables);
+  //res.json(timetables);
 });
 
 app.listen(3000, () => {
