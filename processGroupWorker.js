@@ -19,8 +19,6 @@ const {
 let results = [];
 
 function selectTimetables() {
-  const promises = [];
-
   for (i = start; i <= end; i++) {
     processGroup(
       i,
@@ -218,12 +216,6 @@ function processGroup(idx, groupNum, inserted_subject_list, test_idx) {
       const now_begin =
         Number(day[i].time.split('~')[0].split(':')[0]) * 60 +
         Number(day[i].time.split('~')[0].split(':')[1]);
-      const now_end =
-        Number(day[i].time.split('~')[1].split(':')[0]) * 60 +
-        Number(day[i].time.split('~')[1].split(':')[1]);
-      const bef_begin =
-        Number(day[i - 1].time.split('~')[0].split(':')[0]) * 60 +
-        Number(day[i - 1].time.split('~')[0].split(':')[1]);
       const bef_end =
         Number(day[i - 1].time.split('~')[1].split(':')[0]) * 60 +
         Number(day[i - 1].time.split('~')[1].split(':')[1]);

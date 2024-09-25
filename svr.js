@@ -6,7 +6,7 @@ const dbconfig = require('./config/dbconfig.json');
 const { time } = require('console');
 
 const pool = mysql.createPool({
-  connectionLimit: 100,
+  connectionLimit: 10,
   host: dbconfig.host,
   user: dbconfig.user,
   password: dbconfig.password,
@@ -140,8 +140,8 @@ app.get('/process/search', (req, res) => {
       from lecture as a
       left join subject as b on a.sid=b.sid
       left join (select sid, class, group_concat(concat(day,time,'(',place,')') separator ', ') as time
-             from time_info
-                 group by sid,class) as c on a.sid=c.sid and a.class=c.class ` +
+      from time_info
+      group by sid,class) as c on a.sid=c.sid and a.class=c.class ` +
         where +
         ';',
       params,
@@ -401,6 +401,7 @@ app.get('/process/filter', async (req, res) => {
     );
     start += range + 1;
   }
+
   threads.add(
     new Worker('./processGroupWorker.js', {
       workerData: {
@@ -431,7 +432,6 @@ app.get('/process/filter', async (req, res) => {
     worker.on('exit', (value) => {
       threads.delete(worker); // set에서 쓰레드 삭제
       if (threads.size === 0) {
-        // set이 모두 비웠졌을 경우, 워커쓰레드가 모두 끝난거니까
         console.log('워커 끝~');
         res.json(timetables);
       }

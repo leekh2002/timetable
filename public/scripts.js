@@ -638,3 +638,9 @@ function addLectureToTimeTable(lectures) {
     color = (color + 1) % 11;
   });
 }
+
+document.getElementById('backToSelectionSection').addEventListener('click',(event)=>{
+  document.getElementById('generatedTimetables').style.display='none';
+  document.querySelector('.container').classList.remove('hidden');
+})
+
