@@ -132,8 +132,8 @@ app.get('/process/search', (req, res) => {
       res.write('<h1>db server 연결실패</h1>');
       res.end();
       return;
-    }
-
+    }   
+      
     console.log('데이터베이스 연결');
     const exec = conn.query(
       `select a.major, a.grade, a.sid, a.class, b.name, b.credit, a.course_class, a.prof_name, c.time, a.inst_method
@@ -148,7 +148,7 @@ app.get('/process/search', (req, res) => {
       (err, rows) => {
         conn.release();
         console.log('실행된 SQL: ' + exec.sql);
-
+        
         if (err) {
           console.log('SQL 실행시 오류발생');
           console.dir(err);
@@ -249,6 +249,7 @@ app.get('/process/filter', async (req, res) => {
       };
       try {
         const times = await queryDatabase(el);
+        console.log('times: ', times);
         subject_info[subject_info.length - 1].push(times);
       } catch (err) {}
     }
@@ -367,6 +368,7 @@ app.get('/process/filter', async (req, res) => {
       group_tree_idx[group.length].begin_idx) /
       13500
   );
+  //const threadCount=1;
   const threads = new Set();
   const range = Math.ceil(
     (group_tree_idx[group.length].end_idx -
@@ -425,6 +427,7 @@ app.get('/process/filter', async (req, res) => {
 
   for (let worker of threads) {
     worker.on('message', (value) => {
+      //timetables.push(value);
       Array.prototype.push.apply(timetables, value);
       //console.log('results: ', value);
     });

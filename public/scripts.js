@@ -10,6 +10,7 @@ let sid_set = [];
 const dayDict = {};
 let results;
 let now_results_idx = 0;
+let add_subject_target = 0;
 dayDict['월'] = '1';
 dayDict['화'] = '2';
 dayDict['수'] = '3';
@@ -133,7 +134,7 @@ document.getElementById('searchForm').addEventListener('submit', (event) => {
         });
 
         addButton.addEventListener('click', (event) => {
-          clickEvent(param_row);
+          clickEvent(param_row, 0);
         });
 
         tbody.appendChild(newRow);
@@ -150,7 +151,13 @@ function leaveEvent(event) {
   removeElements(displayed_element);
 }
 
-async function clickEvent(row) {
+function clickEvent(row) {
+  console.log(add_subject_target);
+  if (add_subject_target === 0) addLectureToTimeTable(row);
+  else addLectureToGroup(row, add_subject_target);
+}
+
+async function addLectureToTimeTable(row) {
   const td = row.querySelectorAll('td');
   let i;
   for (i = 0; i < sid_set.length; i++) {
@@ -294,6 +301,60 @@ async function clickEvent(row) {
   }
 }
 
+function addLectureToGroup(row, group) {
+  console.log(row);
+  const lect_info = row.querySelectorAll('td');
+  const div = document.createElement('div');
+  const span_name = document.createElement('span');
+  const span_sid = document.createElement('span');
+  const span_time = document.createElement('span');
+  const span_prof = document.createElement('span');
+  const img = new Image();
+
+  span_name.textContent = lect_info[4].textContent;
+  span_sid.textContent =
+    lect_info[2].textContent + '-' + lect_info[3].textContent;
+  span_time.textContent = lect_info[8].textContent;
+  span_prof.textContent = lect_info[7].textContent;
+  img.src = './image/cancle.png';
+  img.alt = 'cancle';
+  img.style.width = '9px';
+  img.style.height = '9px';
+  let flag = 0;
+  img.addEventListener('click', (event) => {
+    console.log(add_subject_target);
+    if (
+      event.target.parentElement.parentElement.querySelectorAll('div').length ==
+        2 &&
+      add_subject_target != 0
+    )
+      group.querySelector('.placeholder').style.display = 'block';
+    event.target.parentElement.remove();
+  });
+  group.querySelector('.placeholder').style.display = 'none';
+  group.querySelectorAll('div').forEach((element) => {
+    if (element.className == 'placeholder') return;
+    if (
+      element.querySelectorAll('span')[1].textContent == span_sid.textContent
+    ) {
+      flag = 1;
+      return;
+    }
+  });
+
+  if (flag == 1) {
+    alert('이미 그룹에 해당 강의가 포함되어 있습니다.');
+    return;
+  }
+
+  div.appendChild(span_name);
+  div.appendChild(span_sid);
+  div.appendChild(span_prof);
+  div.appendChild(span_time);
+  div.appendChild(img);
+  group.appendChild(div);
+}
+
 function removeElements(elements) {
   elements.forEach((element) => {
     element.remove();
@@ -353,6 +414,7 @@ async function displayTime(tdElements, color, opacity, op) {
 }
 
 document.querySelector('.goto-generator').addEventListener('click', (event) => {
+  event.target.style.display = 'none';
   document.querySelector('.days-table').style.display = 'none';
   document.querySelector('.timetable').style.display = 'none';
   document.querySelector('.nontimes').style.display = 'none';
@@ -366,8 +428,8 @@ document.querySelector('.goto-generator').addEventListener('click', (event) => {
 });
 
 document.querySelector('.back-icon').addEventListener('click', (event) => {
-  console.log('asfes');
   document.querySelector('#filterForm').style.display = 'none';
+  document.querySelector('.goto-generator').style.display = 'block';
   document.querySelector('.days-table').style.display = 'table';
   document.querySelector('.timetable').style.display = 'table';
   document.querySelector('.nontimes').style.display = 'block';
@@ -380,23 +442,40 @@ document.querySelector('.add-group').addEventListener('click', (event) => {
   const div = document.querySelector('.subject-group');
   const group = document.createElement('div');
   const span = document.createElement('span');
-  const img = new Image();
-
+  const remove_img = new Image(),
+    add_subject_img = new Image(),
+    close_add_img = new Image();
   ph.className += 'placeholder';
-  ph.textContent = '드래그앤 드랍으로 강의를 추가하세요';
+  ph.textContent = '이곳에 강의를 추가하세요';
+  ph.style.display = 'none';
+  group.appendChild(ph);
+
   span.textContent = `그룹 ${++group_count} `;
   span.style.fontSize = '16px';
 
   group.className += 'group';
   group.id = `group${group_count}`;
 
-  img.src = './image/bin.png';
-  img.alt = 'bin';
-  img.style.width = '13px';
-  img.style.height = '13px';
+  remove_img.src = './image/bin.png';
+  remove_img.alt = 'bin';
+  remove_img.style.width = '13px';
+  remove_img.style.height = '13px';
 
-  img.addEventListener('click', (event) => {
-    const pardiv = img.parentElement;
+  add_subject_img.src = './image/add.png';
+  add_subject_img.alt = 'add';
+  close_add_img.src = './image/cancle.png';
+  close_add_img.alt = '.close';
+  add_subject_img.className = 'add-subject-btn';
+  close_add_img.className = 'cancle-add-btn';
+
+  add_subject_img.addEventListener('click', (event) => {
+    convertGroupStateToAdd(event);
+  });
+  close_add_img.addEventListener('click', (event) => {
+    convertGroupStateToOrigin(event);
+  });
+  remove_img.addEventListener('click', (event) => {
+    const pardiv = remove_img.parentElement;
     for (let i = Number(pardiv.id.substring(5)) + 1; i <= group_count; i++) {
       const group = document.getElementById(`group${i}`);
       group.id = `group${i - 1}`;
@@ -406,91 +485,12 @@ document.querySelector('.add-group').addEventListener('click', (event) => {
     document.getElementById(pardiv.remove());
   });
 
-  group.append(ph);
   group.appendChild(span);
-  group.appendChild(img);
-
-  group.addEventListener('dragover', (event) => {
-    dragoverFun(event);
-  });
-  group.addEventListener('drop', (event) => {
-    dropFun(event);
-  });
+  group.appendChild(remove_img);
+  group.appendChild(add_subject_img);
+  group.appendChild(close_add_img);
   div.appendChild(group);
 });
-
-document.getElementById('group1').addEventListener('dragover', (event) => {
-  dragoverFun(event);
-});
-document.getElementById('group1').addEventListener('drop', (event) => {
-  dropFun(event);
-});
-
-function dragoverFun(event) {
-  event.preventDefault();
-}
-
-function dropFun(event) {
-  event.preventDefault();
-  const lectInfoJSON = event.dataTransfer.getData('application/json');
-  const lect_info = JSON.parse(lectInfoJSON);
-
-  let group = event.target;
-  while (!group.classList.contains('group')) {
-    group = group.parentElement;
-  }
-
-  const div = document.createElement('div');
-  const span_name = document.createElement('span');
-  const span_sid = document.createElement('span');
-  const span_time = document.createElement('span');
-  const span_prof = document.createElement('span');
-  const img = new Image();
-
-  span_name.textContent = lect_info.name;
-  span_sid.textContent = lect_info.sid + '-' + lect_info.class;
-  span_time.textContent = lect_info.time;
-  span_prof.textContent = lect_info.prof_name;
-  img.src = './image/cancle.png';
-  img.alt = 'cancle';
-  img.style.width = '9px';
-  img.style.height = '9px';
-  let flag = 0;
-
-  group.querySelectorAll('div').forEach((element) => {
-    if (element.className == 'placeholder') return;
-    if (
-      element.querySelectorAll('span')[1].textContent == span_sid.textContent
-    ) {
-      flag = 1;
-      return;
-    }
-  });
-
-  if (flag == 1) {
-    alert('이미 그룹에 해당 강의가 포함되어 있습니다.');
-    return;
-  }
-  group.querySelector('.placeholder').style.display = 'none';
-
-  img.addEventListener('click', (event) => {
-    if (
-      event.target.parentElement.parentElement.querySelectorAll('div').length ==
-      2
-    )
-      event.target.parentElement.parentElement.querySelector(
-        '.placeholder'
-      ).style.display = 'block';
-    event.target.parentElement.remove();
-  });
-
-  div.appendChild(span_name);
-  div.appendChild(span_sid);
-  div.appendChild(span_prof);
-  div.appendChild(span_time);
-  div.appendChild(img);
-  group.appendChild(div);
-}
 
 document
   .getElementById('filterForm')
@@ -563,7 +563,7 @@ document
         document.querySelectorAll('.col2').forEach((element) => {
           element.remove();
         });
-        addLectureToTimeTable(results[0]);
+        addLectureToGeneratedTimeTable(results[0]);
       });
     console.log('resulasfsaefts: ', results);
   });
@@ -579,25 +579,27 @@ document
       document.querySelectorAll('.col2').forEach((element) => {
         element.remove();
       });
-      addLectureToTimeTable(results[Number(now_page.textContent)-1])
+      addLectureToGeneratedTimeTable(results[Number(now_page.textContent) - 1]);
     }
   });
 
-document.querySelector('.generated-timetables-forward').addEventListener('click', (event)=>{
-  const now_page = document.querySelector('.now-page');
-  const all_pages = document.querySelector('.all-pages');
-  
-  if (now_page.textContent != all_pages.textContent) {
-    now_page.textContent = `${Number(now_page.textContent) + 1}`;
-    console.log('cols2: ', document.querySelectorAll('.cols2'));
-    document.querySelectorAll('.col2').forEach((element) => {
-      element.remove();
-    });
-    addLectureToTimeTable(results[Number(now_page.textContent)-1])
-  }
-})
+document
+  .querySelector('.generated-timetables-forward')
+  .addEventListener('click', (event) => {
+    const now_page = document.querySelector('.now-page');
+    const all_pages = document.querySelector('.all-pages');
 
-function addLectureToTimeTable(lectures) {
+    if (now_page.textContent != all_pages.textContent) {
+      now_page.textContent = `${Number(now_page.textContent) + 1}`;
+      console.log('cols2: ', document.querySelectorAll('.cols2'));
+      document.querySelectorAll('.col2').forEach((element) => {
+        element.remove();
+      });
+      addLectureToGeneratedTimeTable(results[Number(now_page.textContent) - 1]);
+    }
+  });
+
+function addLectureToGeneratedTimeTable(lectures) {
   let color = 0;
   console.log('lectures: ', lectures);
   lectures.forEach((lecture) => {
@@ -639,8 +641,64 @@ function addLectureToTimeTable(lectures) {
   });
 }
 
-document.getElementById('backToSelectionSection').addEventListener('click',(event)=>{
-  document.getElementById('generatedTimetables').style.display='none';
-  document.querySelector('.container').classList.remove('hidden');
-})
+document
+  .getElementById('backToSelectionSection')
+  .addEventListener('click', (event) => {
+    document.getElementById('generatedTimetables').style.display = 'none';
+    document.querySelector('.container').classList.remove('hidden');
+  });
 
+document
+  .querySelector('.add-subject-btn')
+  .addEventListener('click', (event) => {
+    convertGroupStateToAdd(event);
+  });
+
+document.querySelector('.cancle-add-btn').addEventListener('click', (event) => {
+  convertGroupStateToOrigin(event);
+});
+function convertGroupStateToAdd(event) {
+  add_subject_target = event.target.parentElement;
+  console.log(add_subject_target);
+  for (let element of document.querySelector('#filterForm').childNodes) {
+    console.log(element);
+    if (element.className != 'subject-group' && element.nodeType == 1)
+      element.style.display = 'none';
+  }
+  document.querySelector('.close-timetable').style.display = 'none';
+  add_subject_target.querySelector('.placeholder').style.display = 'block';
+  if (add_subject_target.querySelectorAll('div').length >= 2)
+    add_subject_target.querySelector('.placeholder').style.display = 'none';
+
+  event.target.style.display = 'none';
+  for (let element of document.querySelectorAll('.group')) {
+    if (element.id != add_subject_target.id) element.style.display = 'none';
+  }
+  event.target.parentElement.querySelector('.cancle-add-btn').style.display =
+    'block';
+}
+function convertGroupStateToOrigin(event) {
+  event.target.style.display = 'none';
+  event.target.parentElement.querySelector('.add-subject-btn').style.display =
+    'block';
+  for (let element of document.querySelector('#filterForm').childNodes) {
+    console.log(element);
+    if (element.nodeType == 1) element.style.display = 'block';
+    if (element.className == 'filtering-section')
+      element.style.display = 'grid';
+  }
+  document.querySelector('.close-timetable').style.display = 'block';
+  add_subject_target.querySelector('.placeholder').style.display = 'none';
+  add_subject_target = 0;
+  displayHiddenGroup();
+}
+
+function displayHiddenGroup() {
+  for (let element of document.querySelectorAll('.cancle-add-btn'))
+    element.style.display = 'none';
+  for (let element of document.querySelectorAll('.add-subject-btn'))
+    element.style.display = 'block';
+  for (let element of document.querySelectorAll('.group')) {
+    element.style.display = 'block';
+  }
+}

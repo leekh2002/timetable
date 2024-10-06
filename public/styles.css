@@ -284,17 +284,12 @@ div.subject {
 }
 
 .output_result {
-  width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
-  margin-top: 10px;
 }
 
 .output_result th,
 .output_result td {
-  padding: 10px;
   border: 1px solid #ddd;
-  text-align: left;
 }
 
 .output_result th {
@@ -305,24 +300,15 @@ div.subject {
   font-size: x-small;
   white-space: nowrap;
   overflow: hidden;
-  min-width: 1px;
-  max-width: 100px;
 }
 
-.results-section .output_result tbody {
+/* .results-section .output_result tbody {
   width: 100%;
   border-collapse: collapse;
   max-height: 400px; 
   overflow-y: auto; 
   display: block;
-}
-
-.results-section .output_result thead,
-.results-section .output_result tbody tr {
-  display: table; 
-  width: 100%; 
-  table-layout: fixed; 
-}
+} */
 
 .results-section .output_result thead {
   display: table;
@@ -333,18 +319,13 @@ div.subject {
 .results-section .output_result tbody {
   display: block; 
   max-height: 400px; 
-  overflow-y: auto; 
-  table-layout: fixed; 
   width: 100%; 
   overflow-x: hidden;
-  padding-right: 12px;
 }
 
 .results-section .output_result th,
 .results-section .output_result td {
   padding: 8px; 
-  text-align: left; 
-  border: 1px solid #ddd;
   width: 10%;
 }
 
@@ -354,18 +335,17 @@ div.subject {
   table-layout: fixed; 
 }
 
-.results-section .output_result {
+/* .results-section .output_result {
   width: 100%; 
   border-collapse: collapse; 
   table-layout: fixed;
-}
+} */
 
 .results-section .output_result::-webkit-scrollbar {
   width: 12px; /
 }
 
 .output_result tbody tr {
-  transition: background-color 0.3s ease;
   position: relative; 
 }
 
@@ -380,9 +360,6 @@ div.subject {
   left: 50%;
   width: fit-content !important;
   transform: translate(-50%, -50%);
-  border: none;
-  padding: 5px 10px;
-  cursor: pointer;
   color: black !important;
   background: none !important;
 }
@@ -443,7 +420,8 @@ p {
 }
 
 .filtering-section {
-  display: none;
+  display: grid;
+  margin-top: 50px;
   grid-template-columns: 1fr 1fr; /* 2열 그리드 레이아웃 */
   gap: 20px; /* 카드 간의 간격을 넓게 설정 */
   margin-bottom: 20px;
@@ -678,3 +656,15 @@ p {
   overflow: hidden;
 }
 
+.add-subject-btn{
+  width: 20px;
+  height: 20px;
+  float: right;
+}
+
+.cancle-add-btn{
+  width: 15px;
+  height: 15px;
+  float: right;
+  display: none;
+}

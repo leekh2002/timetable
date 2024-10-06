@@ -18,6 +18,11 @@ const {
 
 let results = [];
 
+const test_start = new Date();
+const start_time =
+  test_start.getMinutes() * 60000 +
+  test_start.getSeconds() * 1000 +
+  test_start.getMilliseconds();
 function selectTimetables() {
   for (i = start; i <= end; i++) {
     processGroup(
@@ -234,8 +239,12 @@ function processGroup(idx, groupNum, inserted_subject_list, test_idx) {
   //console.log('params: ', timetables);
   return;
 }
-console.log('end: ',end)
-if(end<=group_tree_idx[group.length].end_idx)
-  selectTimetables();
+if (end <= group_tree_idx[group.length].end_idx) selectTimetables();
+const test_end = new Date();
+const end_time =
+  test_end.getMinutes() * 60000 +
+  test_end.getSeconds() * 1000 +
+  test_end.getMilliseconds();
+console.log('end: ', end, ' time: ', test_end - test_start);
 //console.log('results: ', results);
-parentPort.postMessage(results)
+parentPort.postMessage(results);
