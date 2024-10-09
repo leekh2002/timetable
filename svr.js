@@ -1,5 +1,5 @@
 const express = require('express');
-const mysql = require('mysql');
+const mysql = require('mysql2');
 const path = require('path');
 const static = require('serve-static');
 const dbconfig = require('./config/dbconfig.json');
@@ -19,10 +19,56 @@ const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use('/public', static(path.join(__dirname, 'public')));
-
-app.get('/categoryanddeptfromdb', (req, res) => {
+let distances;
+let distance={};
+app.get('/categoryanddeptfromdb', async (req, res) => {
   console.log('categoryanddeptfromdb호출');
 
+  const queryDatabase = () => {
+    return new Promise((resolve, reject) => {
+      pool.getConnection((err, conn) => {
+        if (err) {
+          reject(err);
+        }
+        const exec = conn.query(
+          `select a.name as start, b.name as end ,distance.time
+          from distance, (select distinct bid, name from lectroom) as a, (select distinct bid, name from lectroom) as b
+          where a.bid=distance.start and b.bid=distance.end
+          order by a.name;`,
+          (err, rows) => {
+            conn.release();
+            if (err) {
+              reject(err);
+            } else {
+              resolve(rows);
+            }
+          }
+        );
+      });
+    });
+  };
+  try {
+    distances = await queryDatabase();
+    for (let i = 0; i < distances.length; ) {
+      let end_dict = {};
+      let j;
+      for (j = i; j < distances.length; j++) {
+        end_dict[distances[j].end] = distances[j].time;
+        if (
+          j == distances.length - 1 ||
+          distances[j].start != distances[j + 1].start
+        ) {
+          break;
+        }
+      }
+      distance[distances[i].start] = end_dict;
+      i += j - i + 1;
+    }
+  } catch (err) {
+    console.log('SQL 실행시 오류발생');
+    console.dir(err);
+  }
+  //console.log('distance: ',distance);
   pool.getConnection((err, conn) => {
     if (err) {
       conn.release();
@@ -132,8 +178,8 @@ app.get('/process/search', (req, res) => {
       res.write('<h1>db server 연결실패</h1>');
       res.end();
       return;
-    }   
-      
+    }
+
     console.log('데이터베이스 연결');
     const exec = conn.query(
       `select a.major, a.grade, a.sid, a.class, b.name, b.credit, a.course_class, a.prof_name, c.time, a.inst_method
@@ -148,7 +194,7 @@ app.get('/process/search', (req, res) => {
       (err, rows) => {
         conn.release();
         console.log('실행된 SQL: ' + exec.sql);
-        
+
         if (err) {
           console.log('SQL 실행시 오류발생');
           console.dir(err);
@@ -216,7 +262,6 @@ app.get('/process/filter', async (req, res) => {
   let test_times = [];
   let group_tree_idx = [];
   let timetables = [];
-  let distance = {};
 
   for (const element of group) {
     subject_info.push([]);
@@ -256,50 +301,50 @@ app.get('/process/filter', async (req, res) => {
   }
 
   //(시작 건물, 도착 건물) : 시간 배열 생성
-  const queryDatabase = () => {
-    return new Promise((resolve, reject) => {
-      pool.getConnection((err, conn) => {
-        if (err) {
-          reject(err);
-        }
-        const exec = conn.query(
-          `select a.name as start, b.name as end ,distance.time
-          from distance, (select distinct bid, name from lectroom) as a, (select distinct bid, name from lectroom) as b
-          where a.bid=distance.start and b.bid=distance.end
-          order by a.name;`,
-          (err, rows) => {
-            conn.release();
-            if (err) {
-              reject(err);
-            } else {
-              resolve(rows);
-            }
-          }
-        );
-      });
-    });
-  };
-  try {
-    const distances = await queryDatabase();
-    for (let i = 0; i < distances.length; ) {
-      let end_dict = {};
-      let j;
-      for (j = i; j < distances.length; j++) {
-        end_dict[distances[j].end] = distances[j].time;
-        if (
-          j == distances.length - 1 ||
-          distances[j].start != distances[j + 1].start
-        ) {
-          break;
-        }
-      }
-      distance[distances[i].start] = end_dict;
-      i += j - i + 1;
-    }
-  } catch (err) {
-    console.log('SQL 실행시 오류발생');
-    console.dir(err);
-  }
+  // const queryDatabase = () => {
+  //   return new Promise((resolve, reject) => {
+  //     pool.getConnection((err, conn) => {
+  //       if (err) {
+  //         reject(err);
+  //       }
+  //       const exec = conn.query(
+  //         `select a.name as start, b.name as end ,distance.time
+  //         from distance, (select distinct bid, name from lectroom) as a, (select distinct bid, name from lectroom) as b
+  //         where a.bid=distance.start and b.bid=distance.end
+  //         order by a.name;`,
+  //         (err, rows) => {
+  //           conn.release();
+  //           if (err) {
+  //             reject(err);
+  //           } else {
+  //             resolve(rows);
+  //           }
+  //         }
+  //       );
+  //     });
+  //   });
+  // };
+  // try {
+  //   const distances = await queryDatabase();
+  //   for (let i = 0; i < distances.length; ) {
+  //     let end_dict = {};
+  //     let j;
+  //     for (j = i; j < distances.length; j++) {
+  //       end_dict[distances[j].end] = distances[j].time;
+  //       if (
+  //         j == distances.length - 1 ||
+  //         distances[j].start != distances[j + 1].start
+  //       ) {
+  //         break;
+  //       }
+  //     }
+  //     distance[distances[i].start] = end_dict;
+  //     i += j - i + 1;
+  //   }
+  // } catch (err) {
+  //   console.log('SQL 실행시 오류발생');
+  //   console.dir(err);
+  // }
 
   let i = 0;
   group_tree_idx.push({
@@ -316,7 +361,6 @@ app.get('/process/filter', async (req, res) => {
     k *= group[i].length;
   }
   console.log('idx: ', group_tree_idx);
-
   function selectTimetables() {
     const promises = [];
 
