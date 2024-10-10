@@ -20,7 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use('/public', static(path.join(__dirname, 'public')));
 let distances;
-let distance={};
+let distance = {};
 app.get('/categoryanddeptfromdb', async (req, res) => {
   console.log('categoryanddeptfromdb호출');
 
@@ -68,7 +68,6 @@ app.get('/categoryanddeptfromdb', async (req, res) => {
     console.log('SQL 실행시 오류발생');
     console.dir(err);
   }
-  //console.log('distance: ',distance);
   pool.getConnection((err, conn) => {
     if (err) {
       conn.release();
@@ -300,52 +299,6 @@ app.get('/process/filter', async (req, res) => {
     }
   }
 
-  //(시작 건물, 도착 건물) : 시간 배열 생성
-  // const queryDatabase = () => {
-  //   return new Promise((resolve, reject) => {
-  //     pool.getConnection((err, conn) => {
-  //       if (err) {
-  //         reject(err);
-  //       }
-  //       const exec = conn.query(
-  //         `select a.name as start, b.name as end ,distance.time
-  //         from distance, (select distinct bid, name from lectroom) as a, (select distinct bid, name from lectroom) as b
-  //         where a.bid=distance.start and b.bid=distance.end
-  //         order by a.name;`,
-  //         (err, rows) => {
-  //           conn.release();
-  //           if (err) {
-  //             reject(err);
-  //           } else {
-  //             resolve(rows);
-  //           }
-  //         }
-  //       );
-  //     });
-  //   });
-  // };
-  // try {
-  //   const distances = await queryDatabase();
-  //   for (let i = 0; i < distances.length; ) {
-  //     let end_dict = {};
-  //     let j;
-  //     for (j = i; j < distances.length; j++) {
-  //       end_dict[distances[j].end] = distances[j].time;
-  //       if (
-  //         j == distances.length - 1 ||
-  //         distances[j].start != distances[j + 1].start
-  //       ) {
-  //         break;
-  //       }
-  //     }
-  //     distance[distances[i].start] = end_dict;
-  //     i += j - i + 1;
-  //   }
-  // } catch (err) {
-  //   console.log('SQL 실행시 오류발생');
-  //   console.dir(err);
-  // }
-
   let i = 0;
   group_tree_idx.push({
     begin_idx: 0,
@@ -361,50 +314,6 @@ app.get('/process/filter', async (req, res) => {
     k *= group[i].length;
   }
   console.log('idx: ', group_tree_idx);
-  function selectTimetables() {
-    const promises = [];
-
-    for (
-      let i = group_tree_idx[group.length].begin_idx;
-      i <= group_tree_idx[group.length].end_idx;
-      i++
-    ) {
-      const worker = new Worker('./processGroupWorker.js', {
-        workerData: {
-          idx: i,
-          groupNum: group.length,
-          param3_list: [], // 여기에 실제로 필요한 데이터를 넣으세요
-          freedays,
-          subject_info,
-          distance,
-          mingap,
-          maxgap,
-          gotime,
-          leavetime,
-          btbMaxtime,
-          btbMaxcount,
-          btbecpt,
-        },
-      });
-
-      promises.push(
-        new Promise((resolve) => {
-          worker.on('message', (result) => {
-            timetables.push(result.timetable);
-            test_times.push(result.executionTime);
-            resolve();
-          });
-
-          worker.on('error', (error) => {
-            console.error(error);
-            resolve();
-          });
-        })
-      );
-    }
-
-    // 모든 프로미스가 완료될 때까지 기다림
-  }
 
   const { Worker, workerData } = require('worker_threads');
   const threadCount = Math.ceil(
@@ -484,7 +393,6 @@ app.get('/process/filter', async (req, res) => {
       }
     });
   }
-  //selectTimetables();
 
   //console.log('timetables23231: ', timetables.length);
   let sum = 0;

@@ -657,6 +657,7 @@ document
 document.querySelector('.cancle-add-btn').addEventListener('click', (event) => {
   convertGroupStateToOrigin(event);
 });
+
 function convertGroupStateToAdd(event) {
   add_subject_target = event.target.parentElement;
   console.log(add_subject_target);
@@ -677,6 +678,7 @@ function convertGroupStateToAdd(event) {
   event.target.parentElement.querySelector('.cancle-add-btn').style.display =
     'block';
 }
+
 function convertGroupStateToOrigin(event) {
   event.target.style.display = 'none';
   event.target.parentElement.querySelector('.add-subject-btn').style.display =

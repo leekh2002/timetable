@@ -181,9 +181,10 @@ function processGroup(idx, groupNum, inserted_subject_list, test_idx) {
             //연강 가능여부
             if (btbecpt == 'true') {
               const element_place = time.place;
-              //console.log('subject.place: ',subject.place,' subject_in_timetable.place: ',subject_in_timetable.place)
-              const walk_time =
-                distance[time.place][subject_in_timetable.place];
+              
+              let walk_time=0;
+              if(distance[element_place] !== undefined && distance[element_place][subject_in_timetable.place] !== undefined)
+                walk_time = distance[element_place][subject_in_timetable.place];
               if (walk_time > 600) {
                 // console.log('연강 불가능');
                 flag = 1;
