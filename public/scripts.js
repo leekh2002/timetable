@@ -20,7 +20,9 @@ dayDict['토'] = '6';
 dayDict['일'] = '7';
 
 document.addEventListener('DOMContentLoaded', function () {});
-
+document.getElementById('department').addEventListener('click', (event) => {
+  event.target.value='';
+});
 const categoryAndDeptfromdb = (category, department) => {
   fetch('/categoryanddeptfromdb', {
     method: 'GET',
