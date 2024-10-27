@@ -11,6 +11,9 @@ const dayDict = {};
 let results;
 let now_results_idx = 0;
 let add_subject_target = 0;
+let timetable_count = 0;
+let current_timetable = 0;
+let timetables = [];
 dayDict['월'] = '1';
 dayDict['화'] = '2';
 dayDict['수'] = '3';
@@ -21,7 +24,7 @@ dayDict['일'] = '7';
 
 document.addEventListener('DOMContentLoaded', function () {});
 document.getElementById('department').addEventListener('click', (event) => {
-  event.target.value='';
+  event.target.value = '';
 });
 const categoryAndDeptfromdb = (category, department) => {
   fetch('/categoryanddeptfromdb', {
@@ -157,6 +160,7 @@ function clickEvent(row) {
   console.log(add_subject_target);
   if (add_subject_target === 0) addLectureToTimeTable(row);
   else addLectureToGroup(row, add_subject_target);
+  console.log('timetable: ', timetables[current_timetable]);
 }
 
 async function addLectureToTimeTable(row) {
@@ -263,6 +267,10 @@ async function addLectureToTimeTable(row) {
         img.alt = 'bin';
         img.addEventListener('click', (event) => {
           const parent = img.parentElement;
+          const index = timetables[current_timetable].lecture_list.indexOf(parent.dataset.sid);
+          timetables[current_timetable].lecture_list.splice(index,1);
+
+          
 
           for (let i = 0; i < sid_set.length; i++) {
             if (sid_set[i] == parent.dataset.sid) {
@@ -286,13 +294,38 @@ async function addLectureToTimeTable(row) {
               document.querySelector('.sat').style.display = 'none';
             }
           }
+          for(let lecture of document.querySelectorAll('.' + `${parent.classList[0]}`)){
+            console.log('lecture: ',lecture);
+            timetables[current_timetable].lectures_of_day[lecture.parentElement.parentElement.dataset.day]=
+            timetables[current_timetable].lectures_of_day[lecture.parentElement.parentElement.dataset.day].
+            filter(item => item.sid != lecture.dataset.sid)
+          }
           removeElements(
             document.querySelectorAll('.' + `${parent.classList[0]}`)
           );
+          console.log('delete: ',timetables[current_timetable]);
         });
+
         h5.textContent = td[4].textContent;
         em.textContent = td[7].textContent;
         span.textContent = element.dataset.place;
+
+        if (
+          !timetables[current_timetable].lecture_list.includes(
+            td[2].textContent
+          )
+        )
+          timetables[current_timetable].lecture_list.push(td[2].textContent);
+        timetables[current_timetable].lectures_of_day[day_div.dataset.day].push(
+          {
+            sid: td[2].textContent,
+            start: element.getAttribute('data-start'),
+            end: element.getAttribute('data-end'),
+            place: element.dataset.place,
+            name: td[4].textContent,
+          }
+        );
+
         p.appendChild(em);
         p.appendChild(span);
         element.appendChild(h5);
@@ -397,6 +430,7 @@ async function displayTime(tdElements, color, opacity, op) {
         const start_min = Number(start.split(':')[1]);
         const end_hour = Number(end.split(':')[0]);
         const end_min = Number(end.split(':')[1]);
+
         div.style.top =
           `${(((start_hour - 8) * 60 + start_min) / 960) * 758.72}` + 'px';
         div.style.height =
@@ -408,6 +442,8 @@ async function displayTime(tdElements, color, opacity, op) {
         column.appendChild(div);
         div.setAttribute('data-place', element.place);
         div.setAttribute('data-sid', tdElements[2].textContent);
+        div.setAttribute('data-start', start);
+        div.setAttribute('data-end', end);
         if (op == 0) displayed_element.push(div);
         i++;
       });
@@ -420,7 +456,9 @@ document.querySelector('.goto-generator').addEventListener('click', (event) => {
   document.querySelector('.days-table').style.display = 'none';
   document.querySelector('.timetable').style.display = 'none';
   document.querySelector('.nontimes').style.display = 'none';
-  console.log('asefasegasefsef');
+  document.getElementById('generate-planb').style.display = 'none';
+  document.getElementById('cancle-planb').style.display = 'none';
+  document.getElementById('select-planb').style.display = 'none';
   // 'filtering-section', 'add-group', 'subject-group' 표시
   document.querySelector('.filtering-section').style.display = 'grid';
   document.querySelector('.add-group').style.display = 'block';
@@ -430,6 +468,7 @@ document.querySelector('.goto-generator').addEventListener('click', (event) => {
 });
 
 document.querySelector('.back-icon').addEventListener('click', (event) => {
+  canclePlanb(document.getElementById('generate-planb'));
   document.querySelector('#filterForm').style.display = 'none';
   document.querySelector('.goto-generator').style.display = 'block';
   document.querySelector('.days-table').style.display = 'table';
@@ -706,3 +745,132 @@ function displayHiddenGroup() {
     element.style.display = 'block';
   }
 }
+
+function checkboxOn(target) {
+  target.style.display = 'none';
+  document.getElementById('cancle-planb').style.display = 'inline-block';
+  document.getElementById('select-planb').style.display = 'block';
+
+  const cols = document.querySelectorAll('.cols');
+  let i = 0;
+  for (let col of cols) {
+    const lectures = col.querySelectorAll('div');
+    for (let lecture of lectures) {
+      addCheckBox(lecture, i++, false);
+    }
+  }
+  for (let div of document.querySelectorAll('.nontimes > div')) {
+    addCheckBox(div, i++, true);
+  }
+}
+
+function addCheckBox(target, num, isRemote) {
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.name = checkbox.id = `${num}`;
+  checkbox.value = target.getAttribute('data-sid');
+  if (!isRemote) {
+    checkbox.style.position = 'absolute';
+    checkbox.style.right = '0px';
+  }
+  checkbox.addEventListener('change', (event) => {
+    let isChecked = event.target.checked;
+    changeCheckState(isChecked, checkbox.value);
+  });
+  target.prepend(checkbox);
+}
+
+function changeCheckState(isChecked, sid) {
+  for (let checkbox of document.querySelectorAll(`input[value="${sid}"]`)) {
+    checkbox.checked = isChecked;
+  }
+}
+
+function canclePlanb(target) {
+  target.style.display = 'none';
+  document.getElementById('generate-planb').style.display = 'block';
+  document.getElementById('select-planb').style.display = 'none';
+
+  for (let checkbox of document.querySelectorAll(
+    '.timetable-list input[type="checkbox"]'
+  )) {
+    checkbox.remove();
+  }
+}
+
+function getCheckedLectures() {
+  let results = [];
+  for (let checkbox of document.querySelectorAll(
+    '.timetable-list input[type="checkbox"]'
+  )) {
+    if (
+      checkbox.checked &&
+      !results.includes(checkbox.parentElement.getAttribute('data-sid'))
+    ) {
+      results.push(checkbox.parentElement.getAttribute('data-sid'));
+    }
+  }
+
+  return results;
+}
+
+function getPlanb(selected_lectures) {
+  selected_lectures.sort();
+  if (timetables[current_timetable].getPlanb(selected_lectures) == undefined) {
+    const timetable = new Timetable(++timetable_count);
+    timetables.push(timetable);
+    timetables[current_timetable].addPlanb(selected_lectures, timetable);
+  }
+  return timetables[current_timetable].getPlanb(selected_lectures).timetable;
+}
+
+document.getElementById('generate-planb').addEventListener('click', (event) => {
+  checkboxOn(event.target);
+});
+
+document.getElementById('cancle-planb').addEventListener('click', (event) => {
+  canclePlanb(event.target);
+});
+
+document.getElementById('select-planb').addEventListener('click', (event) => {
+  let selected_lectures = getCheckedLectures();
+  const planb = getPlanb(selected_lectures);
+  current_timetable=planb.timetable_num;
+});
+
+class Timetable {
+  lecture_list = [];
+  lectures_of_day = [[], [], [], [], [], [], []];
+  planb_list = [];
+  timetable_num;
+
+  constructor(timetable_num) {
+    this.timetable_num = timetable_num;
+  }
+
+  addPlanb(selected_lectures, timetable) {
+    const key = selected_lectures.join(' ');
+    this.planb_list.push({ key: key, timetable: timetable });
+  }
+
+  addLecture(lecture) {
+    this.lecture_list.push(lecture);
+  }
+
+  getPlanb(key) {
+    key = key.join(' ');
+    console.log(this.planb_list.find((item) => item.key === key));
+    return this.planb_list.find((item) => item.key === key);
+  }
+
+  removeLecture(sid) {
+    for (let i = 0; i < this.lecture_list.length; i++) {
+      if (lecture[i].sid == sid) {
+        this.lecture_list.splice(i, 1);
+        break;
+      }
+    }
+  }
+}
+
+timetables.push(new Timetable(0));

@@ -109,7 +109,7 @@ button:hover {
 }
 
 .days-table {
-  margin-top: 40px;
+  /* margin-top: 40px; */
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
@@ -662,9 +662,23 @@ p {
   float: right;
 }
 
-.cancle-add-btn{
+.cancle-add-btn{ 
   width: 15px;
   height: 15px;
   float: right;
   display: none;
 }
+
+#generate-planb, #cancle-planb{
+  width: fit-content;
+  background: none;
+  color: red;
+}
+
+#select-planb{
+  display: block;
+  width: fit-content;
+  float: right;
+  font-size: 13px;
+}
+
