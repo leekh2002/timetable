@@ -149,7 +149,15 @@ document.getElementById('searchForm').addEventListener('submit', (event) => {
 });
 
 function enterEvent(event) {
-  displayTime(event.target.querySelectorAll('td'), 10, '0.2', 0);
+  const td = event.target.querySelectorAll('td');
+  const lecture_info = {
+    sid: td[2].textContent,
+    class: td[3].textContent,
+    name: td[4].textContent,
+    prof_name: td[7].textContent,
+    time: seperateTime(td[8].textContent),
+  };
+  displayTime(lecture_info, 10, '0.2', 0);
 }
 
 function leaveEvent(event) {
@@ -157,45 +165,108 @@ function leaveEvent(event) {
 }
 
 function clickEvent(row) {
-  console.log(add_subject_target);
-  if (add_subject_target === 0) addLectureToTimeTable(row);
+  const td = row.querySelectorAll('td');
+  const lecture_info = {
+    sid: td[2].textContent,
+    class: td[3].textContent,
+    name: td[4].textContent,
+    prof_name: td[7].textContent,
+    time: seperateTime(td[8].textContent),
+  };
+  if (add_subject_target === 0) addLectureToTimeTable(lecture_info);
   else addLectureToGroup(row, add_subject_target);
-  console.log('timetable: ', timetables[current_timetable_num]);
 }
 
-async function addLectureToTimeTable(row) {
-  const td = row.querySelectorAll('td');
+function seperateTime(time) {
+  if (time == '') return '';
+  const ret = [];
+  const no_space = time.split(' ').join('');
+  const splited_times = no_space.split(',');
+
+  for (let element of splited_times) {
+    const day = element[0];
+    const place = element.match(/\((.*)\)/)[1];
+    const time = element.substring(1, element.indexOf('('));
+    const start = time.split('~')[0];
+    const end = time.split('~')[1];
+
+    ret.push({
+      day: day,
+      place: place,
+      start: start,
+      end: end,
+    });
+  }
+  return ret;
+}
+
+async function addLectureToTimeTable(lecture) {
+  console.log('lecture: ', lecture);
   let i;
-  for (i = 0; i < sid_set.length; i++) {
-    if (td[2].textContent == sid_set[i]) {
+  const current_lectures = timetables[current_timetable_num].lecture_list;
+
+  for (let element of current_lectures) {
+    if (lecture.sid == element.sid) {
       alert('동일한 과목코드를 가진 과목은 두개 이상 담을 수 없습니다.');
-      break;
+      return;
     }
   }
-  if (i < sid_set.length) return;
 
-  await displayTime(td, color_num++ % 10, '1', 1);
+  await displayTime(lecture, color_num++ % 10, '1', 1);
   let flag = 0;
   displayed_element.forEach((element) => {
     element.remove();
   });
-  if (td[8].textContent == '') {
+  if (lecture.time == '') {
     const nontime = document.querySelector('.nontimes');
     const div = document.createElement('div');
     const span = document.createElement('span');
     const img = new Image();
 
-    div.setAttribute('data-sid', td[2].textContent);
+    pushAddLi(
+      timetables[timetables[current_timetable_num].before_timetable_num],
+      timetables[current_timetable_num],
+      {
+        sid: lecture.sid,
+        class: lecture.class,
+        name: lecture.name,
+      }
+    );
+    if (
+      !timetables[current_timetable_num].lecture_list.some(
+        (element) => element.sid == `${lecture.sid}-${lecture.class}`
+      )
+    )
+      timetables[current_timetable_num].lecture_list.push(lecture);
+
+    div.setAttribute('data-sid', lecture.sid);
+    div.setAttribute('data-class', lecture.class);
     div.className += 'subject';
 
     span.className += 'name';
-    span.textContent = td[4].textContent;
+    span.textContent = lecture.name;
     span.style.setProperty('font-size', '15px', 'important');
 
     img.src = `./image/bin.png`;
     img.alt = 'bin';
     img.addEventListener('click', (event) => {
       const parent = img.parentElement;
+      const index = timetables[current_timetable_num].lecture_list.findIndex(
+        (element) =>
+          element.sid == parent.dataset.sid &&
+          element.class == parent.getAttribute('data-class')
+      );
+      timetables[current_timetable_num].lecture_list.splice(index, 1);
+      pushRemoveLi(
+        timetables[timetables[current_timetable_num].before_timetable_num],
+        timetables[current_timetable_num],
+        {
+          sid: parent.dataset.sid,
+          class: parent.getAttribute('data-class'),
+          name: parent.getAttribute('data-name'),
+        }
+      );
+
       for (let i = 0; i < sid_set.length; i++) {
         if (sid_set[i] == parent.dataset.sid) {
           sid_set.splice(i, 1);
@@ -209,7 +280,7 @@ async function addLectureToTimeTable(row) {
     div.appendChild(span);
     div.appendChild(img);
     nontime.appendChild(div);
-    sid_set.push(td[2].textContent);
+    sid_set.push(lecture.sid);
     return;
   }
   document.querySelectorAll('.col' + `${class_num2 - 1}`).forEach((element) => {
@@ -240,11 +311,16 @@ async function addLectureToTimeTable(row) {
     alert('해당시간과 겹치는 강의가 있습니다.');
     return;
   } else {
-    timetables[current_timetable_num].sid_name_dict.push({
-      sid : td[2].textContent,
-      name : td[4].textContent
-    });
-
+    pushAddLi(
+      timetables[timetables[current_timetable_num].before_timetable_num],
+      timetables[current_timetable_num],
+      {
+        sid: lecture.sid,
+        class: lecture.class,
+        name: lecture.name,
+      }
+    );
+    timetables[current_timetable_num].lecture_list.push(lecture);
     document
       .querySelectorAll('.col' + `${class_num2 - 1}`)
       .forEach((element) => {
@@ -272,10 +348,24 @@ async function addLectureToTimeTable(row) {
         img.alt = 'bin';
         img.addEventListener('click', (event) => {
           const parent = img.parentElement;
-          const index = timetables[current_timetable_num].lecture_list.indexOf(parent.dataset.sid);
-          timetables[current_timetable_num].lecture_list.splice(index,1);
+          const index = timetables[
+            current_timetable_num
+          ].lecture_list.findIndex(
+            (element) =>
+              element.sid == parent.dataset.sid &&
+              element.class == parent.getAttribute('data-class')
+          );
 
-          
+          timetables[current_timetable_num].lecture_list.splice(index, 1);
+          pushRemoveLi(
+            timetables[timetables[current_timetable_num].before_timetable_num],
+            timetables[current_timetable_num],
+            {
+              sid: parent.dataset.sid,
+              class: parent.getAttribute('data-class'),
+              name: parent.getAttribute('data-name'),
+            }
+          );
 
           for (let i = 0; i < sid_set.length; i++) {
             if (sid_set[i] == parent.dataset.sid) {
@@ -283,9 +373,6 @@ async function addLectureToTimeTable(row) {
               break;
             }
           }
-
-          timetables[current_timetable_num].sid_name_dict = timetables[current_timetable_num].sid_name_dict
-          .filter(item => item.sid != parent.dataset.sid)
 
           if (parent.parentElement.parentElement.dataset.day == 6) {
             if (parent.parentElement.querySelectorAll('div').length == 1) {
@@ -303,40 +390,20 @@ async function addLectureToTimeTable(row) {
               document.querySelector('.sat').style.display = 'none';
             }
           }
-          for(let lecture of document.querySelectorAll('.' + `${parent.classList[0]}`)){
-            console.log('lecture: ',lecture);
-            timetables[current_timetable_num].lectures_of_day[lecture.parentElement.parentElement.dataset.day]=
-            timetables[current_timetable_num].lectures_of_day[lecture.parentElement.parentElement.dataset.day].
-            filter(item => item.sid != lecture.dataset.sid)
-
-
+          for (let lecture of document.querySelectorAll(
+            '.' + `${parent.classList[0]}`
+          )) {
+            console.log('lecture: ', lecture);
           }
           removeElements(
             document.querySelectorAll('.' + `${parent.classList[0]}`)
           );
-          console.log('delete: ',timetables[current_timetable_num]);
+          console.log('delete: ', timetables[current_timetable_num]);
         });
 
-        h5.textContent = td[4].textContent;
-        em.textContent = td[7].textContent;
+        h5.textContent = lecture.name;
+        em.textContent = lecture.prof_name;
         span.textContent = element.dataset.place;
-
-        if (
-          !timetables[current_timetable_num].lecture_list.includes(
-            td[2].textContent
-          )
-        )
-          timetables[current_timetable_num].lecture_list.push(td[2].textContent);
-        timetables[current_timetable_num].lectures_of_day[day_div.dataset.day].push(
-          {
-            sid: td[2].textContent,
-            start: element.getAttribute('data-start'),
-            end: element.getAttribute('data-end'),
-            place: element.dataset.place,
-            name: td[4].textContent,
-          }
-        );
-        
 
         p.appendChild(em);
         p.appendChild(span);
@@ -344,7 +411,7 @@ async function addLectureToTimeTable(row) {
         element.appendChild(p);
         element.appendChild(img);
       });
-    sid_set.push(td[2].textContent);
+    sid_set.push(lecture.sid);
   }
 }
 
@@ -407,61 +474,50 @@ function removeElements(elements) {
     element.remove();
   });
 }
+async function displayTime(lecture, color, opacity, op) {
+  const name = lecture.name;
+  const prof_name = lecture.prof_name;
 
-async function displayTime(tdElements, color, opacity, op) {
-  const name = tdElements[4].textContent;
-  const prof_name = tdElements[7].textContent;
-  await fetch(
-    `/process/getTime?sid=${tdElements[2].textContent}&class=${tdElements[3].textContent}`,
-    {
-      method: 'GET',
+  for (let element of lecture.time) {
+    if (element.day == null) {
+      return;
     }
-  )
-    .then((res) => res.json())
-    .then((data) => {
-      let i = 0;
-      data.forEach((element) => {
-        if (element.day == null) {
-          return;
-        }
-        const column = document
-          .querySelector(`[data-day='${dayDict[element.day]}']`)
-          .getElementsByClassName('cols')[0];
+    const column = document
+      .querySelector(`[data-day='${dayDict[element.day]}']`)
+      .getElementsByClassName('cols')[0];
 
-        const div = document.createElement('div');
-        if (op == 1) div.className += 'col' + `${class_num2} `;
+    const div = document.createElement('div');
+    if (op == 1) div.className += 'col' + `${class_num2} `;
 
-        div.style.position = 'absolute';
-        div.style.width = width_value;
-        div.className += 'color' + `${color}`;
-        div.style.opacity = opacity;
+    div.style.position = 'absolute';
+    div.style.width = width_value;
+    div.className += 'color' + `${color}`;
+    div.style.opacity = opacity;
 
-        const start = element.time.split('~')[0];
-        const end = element.time.split('~')[1];
-        const start_hour = Number(start.split(':')[0]);
-        const start_min = Number(start.split(':')[1]);
-        const end_hour = Number(end.split(':')[0]);
-        const end_min = Number(end.split(':')[1]);
+    const start = element.start;
+    const end = element.end;
+    const start_hour = Number(start.split(':')[0]);
+    const start_min = Number(start.split(':')[1]);
+    const end_hour = Number(end.split(':')[0]);
+    const end_min = Number(end.split(':')[1]);
 
-        div.style.top =
-          `${(((start_hour - 8) * 60 + start_min) / 960) * 758.72}` + 'px';
-        div.style.height =
-          `${
-            ((end_hour * 60 + end_min - (start_hour * 60 + start_min)) / 60) *
-            47.42
-          }` + 'px';
-        div.style.overflow = 'hidden';
-        column.appendChild(div);
-        div.setAttribute('data-place', element.place);
-        div.setAttribute('data-sid', tdElements[2].textContent);
-        div.setAttribute('data-name',name);
-        div.setAttribute('data-start', start);
-        div.setAttribute('data-end', end);
-        if (op == 0) displayed_element.push(div);
-        i++;
-      });
-      if (op == 1) class_num2++;
-    });
+    div.style.top =
+      `${(((start_hour - 8) * 60 + start_min) / 960) * 758.72}` + 'px';
+    div.style.height =
+      `${
+        ((end_hour * 60 + end_min - (start_hour * 60 + start_min)) / 60) * 47.42
+      }` + 'px';
+    div.style.overflow = 'hidden';
+    column.appendChild(div);
+    div.setAttribute('data-place', element.place);
+    div.setAttribute('data-sid', lecture.sid);
+    div.setAttribute('data-class', lecture.class);
+    div.setAttribute('data-name', name);
+    div.setAttribute('data-start', start);
+    div.setAttribute('data-end', end);
+    if (op == 0) displayed_element.push(div);
+  }
+  if (op == 1) class_num2++;
 }
 
 document.querySelector('.goto-generator').addEventListener('click', (event) => {
@@ -472,8 +528,8 @@ document.querySelector('.goto-generator').addEventListener('click', (event) => {
   document.getElementById('generate-planb').style.display = 'none';
   document.getElementById('cancle-planb').style.display = 'none';
   document.getElementById('select-planb').style.display = 'none';
-  document.getElementById('planb-summary').style.display='none';
-  document.getElementById('goto-first').style.display='none';
+  document.getElementById('planb-summary').style.display = 'none';
+  document.getElementById('goto-first').style.display = 'none';
   // 'filtering-section', 'add-group', 'subject-group' 표시
   document.querySelector('.filtering-section').style.display = 'grid';
   document.querySelector('.add-group').style.display = 'block';
@@ -489,9 +545,9 @@ document.querySelector('.back-icon').addEventListener('click', (event) => {
   document.querySelector('.days-table').style.display = 'table';
   document.querySelector('.timetable').style.display = 'table';
   document.querySelector('.nontimes').style.display = 'block';
-  if(!timetables[current_timetable_num].is_root){
-    document.getElementById('planb-summary').style.display='flex';
-    document.getElementById('goto-first').style.display='inline-block'
+  if (!timetables[current_timetable_num].is_root) {
+    document.getElementById('planb-summary').style.display = 'flex';
+    document.getElementById('goto-first').style.display = 'inline-block';
   }
 });
 
@@ -812,7 +868,7 @@ function canclePlanb(target) {
   //document.getElementById('planb-summary').style.display='none';
 
   for (let checkbox of document.querySelectorAll(
-    '.timetable-list input[type="checkbox"]'
+    '.timetable input[type="checkbox"]'
   )) {
     checkbox.remove();
   }
@@ -821,55 +877,176 @@ function canclePlanb(target) {
 function getCheckedLectures() {
   let results = [];
   for (let checkbox of document.querySelectorAll(
-    '.timetable-list input[type="checkbox"]'
+    '.timetable input[type="checkbox"]'
   )) {
-    if (
-      checkbox.checked &&
-      !results.includes(checkbox.parentElement.getAttribute('data-sid'))
-    ) {
-      results.push(checkbox.parentElement.getAttribute('data-sid'));
+    if (checkbox.checked) {
+      results.push(
+        timetables[current_timetable_num].lecture_list.find(
+          (item) => item.sid == checkbox.parentElement.getAttribute('data-sid')
+        )
+      );
     }
   }
-
   return results;
 }
 
 function getPlanb(selected_lectures) {
   selected_lectures.sort();
-  if (timetables[current_timetable_num].getPlanb(selected_lectures) == undefined) {
-    const timetable = new Timetable(++timetable_count, false, current_timetable_num);
+  console.log('sel: ', selected_lectures);
+  if (
+    timetables[current_timetable_num].getPlanb(selected_lectures) == undefined
+  ) {
+    const timetable = new Timetable(
+      ++timetable_count,
+      false,
+      current_timetable_num
+    );
+
+    console.log('lect_list:', timetable.lecture_list);
+    for (let checkbox of document.querySelectorAll(
+      '.timetable input[type="checkbox"]'
+    )) {
+      if (
+        !checkbox.checked &&
+        (timetable.lecture_list.length == 0 ||
+          !timetable.lecture_list.some(
+            (item) =>
+              item.sid == checkbox.parentElement.getAttribute('data-sid')
+          ))
+      ) {
+        console.log('fsaf: ', timetables[current_timetable_num].lecture_list);
+        timetable.addLecture(
+          timetables[current_timetable_num].lecture_list.find(
+            (item) =>
+              item.sid == checkbox.parentElement.getAttribute('data-sid')
+          )
+        );
+      }
+    }
+
     timetables.push(timetable);
     timetables[current_timetable_num].addPlanb(selected_lectures, timetable);
   }
-  return timetables[current_timetable_num].getPlanb(selected_lectures).timetable;
+  return timetables[current_timetable_num].getPlanb(selected_lectures)
+    .timetable;
 }
 
-function createListRemoveAndAdd(planb, selected_lectures){
-  console.log('planb: ',planb);
-  document.getElementById('planb-summary').style.display='flex';
-  const remove_list=[];
-  const add_list=[];
-  const before_timetable=timetables[timetables[current_timetable_num].before_timetable_num];
+function pushRemoveLi(before_timetable, current_timetable, lecture) {
+  const remove_ul = document.querySelector('#planb-remove-lecture > ul');
+  if (
+    !current_timetable.lecture_list.some(
+      (element) => element.sid == lecture.sid && element.class == lecture.class
+    ) &&
+    before_timetable.lecture_list.some(
+      (element) => element.sid == lecture.sid && element.class == lecture.class
+    )
+  ) {
+    const li = document.createElement('li');
+    li.textContent = `${lecture.name} ${lecture.sid}-${lecture.class}`;
+    remove_ul.appendChild(li);
+  }
+  console.log('pushRemove');
+  popAddLi(lecture);
+}
 
-  for(let sid of before_timetable.lecture_list){
-    if(!planb.lecture_list.includes(sid) && !selected_lectures.includes(sid)){
-      remove_list.push({
-        sid : sid, 
-        name : before_timetable.sid_name_dict.find(item => item == sid).name
+function pushAddLi(before_timetable, current_timetable, lecture) {
+  const add_ul = document.querySelector('#planb-add-lecture > ul');
+  console.log('before:', before_timetable);
+  if (
+    !before_timetable.lecture_list.some(
+      (element) => element.sid == lecture.sid && element.class == lecture.class
+    )
+  ) {
+    const li = document.createElement('li');
+    li.textContent = `${lecture.name} ${lecture.sid}-${lecture.class}`;
+    add_ul.appendChild(li);
+  }
+
+  popRemoveLi(lecture);
+}
+
+function popRemoveLi(lecture) {
+  const remove_ul = document.querySelector('#planb-remove-lecture > ul');
+  for (let li of remove_ul.querySelectorAll('li')) {
+    const splited_string = li.textContent.split(' ');
+    if (
+      splited_string[splited_string.length - 1] ==
+      `${lecture.sid}-${lecture.class}`
+    ) {
+      li.remove();
+      break;
+    }
+  }
+}
+
+function popAddLi(lecture) {
+  const add_ul = document.querySelector('#planb-add-lecture > ul');
+  for (let li of add_ul.querySelectorAll('li')) {
+    const splited_string = li.textContent.split(' ');
+    if (
+      splited_string[splited_string.length - 1] ==
+      `${lecture.sid}-${lecture.class}`
+    ) {
+      li.remove();
+      break;
+    }
+  }
+}
+
+function createListRemoveAndAdd(planb, selected_lectures) {
+  console.log('planb: ', planb);
+  document.getElementById('planb-summary').style.display = 'flex';
+  const before_timetable = timetables[planb.before_timetable_num];
+
+  const remove_ul = document.querySelector('#planb-remove-lecture > ul');
+  remove_ul.innerHTML = '';
+  console.log('before timetable: ', before_timetable);
+  console.log('selected: ', selected_lectures);
+  for (let element of before_timetable.lecture_list) {
+    const sid = element.sid;
+    const cls = element.class;
+
+    if (
+      !selected_lectures.some(
+        (element) => element.sid == sid && element.class == cls
+      )
+    ) {
+      pushRemoveLi(before_timetable, planb, {
+        sid: sid,
+        class: cls,
+        name: before_timetable.lecture_list.find(
+          (item) => item.sid == sid && item.class == cls
+        ).name,
       });
     }
   }
 
-  for(let sid of planb.lecture_list){
-    if(!before_timetable.lecture_list.includes(sid)){
-      add_list.push({
-        sid : sid,
-        name : planb.sid_name_dict.find(item => item==sid).name
-      });
-    }
-  }
+  const add_ul = document.querySelector('#planb-add-lecture > ul');
+  add_ul.innerHTML = '';
 
+  for (let element of planb.lecture_list) {
+    const sid = element.sid;
+    const cls = element.class;
+    pushAddLi(before_timetable, planb, {
+      sid: sid,
+      class: cls,
+      name: planb.lecture_list.find(
+        (item) => item.sid == sid && item.class == cls
+      ).name,
+    });
+  }
+}
+
+function deleteCheckedElements(lectures) {
   
+  for (let lecture of lectures) {
+    console.log('fes:', document.querySelectorAll(`[data-sid="${lecture.sid}"]`));
+    document
+      .querySelectorAll(`[data-sid="${lecture.sid}"]`)
+      .forEach((element) => {
+        element.remove();
+      });
+  }
 }
 
 document.getElementById('generate-planb').addEventListener('click', (event) => {
@@ -882,29 +1059,31 @@ document.getElementById('cancle-planb').addEventListener('click', (event) => {
 
 document.getElementById('select-planb').addEventListener('click', (event) => {
   let selected_lectures = getCheckedLectures();
-  document.getElementById('goto-first').style.display='inline-block';
+  deleteCheckedElements(selected_lectures);
+  document.getElementById('goto-first').style.display = 'inline-block';
+  console.log('num: ', current_timetable_num);
   const planb = getPlanb(selected_lectures);
-  createListRemoveAndAdd(planb, selected_lectures)
-  current_timetable_num=planb.timetable_num;
+  createListRemoveAndAdd(planb, selected_lectures);
+  current_timetable_num = planb.timetable_num;
 });
 
 class Timetable {
   lecture_list = [];
-  lectures_of_day = [[], [], [], [], [], [], []];
   planb_list = [];
-  sid_name_dict=[];
   before_timetable_num;
   timetable_num;
   is_root;
 
   constructor(timetable_num, is_root, before_timetable_num) {
     this.timetable_num = timetable_num;
-    this.is_root=is_root;
-    this.before_timetable_num=before_timetable_num;
+    this.is_root = is_root;
+    this.before_timetable_num = before_timetable_num;
   }
 
   addPlanb(selected_lectures, timetable) {
-    const key = selected_lectures.join(' ');
+    const key = selected_lectures
+      .map((item) => `${item.sid}-${item.class}`)
+      .join(' ');
     this.planb_list.push({ key: key, timetable: timetable });
   }
 
@@ -913,8 +1092,7 @@ class Timetable {
   }
 
   getPlanb(key) {
-    key = key.join(' ');
-    console.log(this.planb_list.find((item) => item.key === key));
+    key = key.map((item) => `${item.sid}-${item.class}`).join(' ');
     return this.planb_list.find((item) => item.key === key);
   }
 
