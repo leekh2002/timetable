@@ -682,3 +682,15 @@ p {
   font-size: 13px;
 }
 
+#planb-summary{
+  display: flex; 
+  justify-content: space-between;
+}
+
+#goto-first{
+  width: fit-content;
+  background: none;
+  color: black;
+  display: none;
+}
+
