@@ -177,15 +177,6 @@ function clickEvent(row) {
       checkCommonSid([lecture_info]) == 0 &&
       addLectureToTimeTable([lecture_info]) != -1
     ) {
-      pushAddLi(
-        timetables[timetables[current_timetable_num].before_timetable_num],
-        timetables[current_timetable_num],
-        {
-          sid: lecture_info.sid,
-          class: lecture_info.class,
-          name: lecture_info.name,
-        }
-      );
       timetables[current_timetable_num].lecture_list.push(lecture_info);
     }
   } else addLectureToGroup(row, add_subject_target);
@@ -227,15 +218,26 @@ function checkCommonSid(lectures) {
   return 0;
 }
 
+function checkBeforeSelectedLecture(timetable, lecture) {
+  for (let before_selected of timetable.selected_lectures) {
+    if (
+      before_selected.sid == lecture.sid &&
+      before_selected.class == lecture.class
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function addLectureToTimeTable(lectures) {
-  
-  
+  console.log('lectures: ', lectures);
   for (let lecture of lectures) {
-    for(let before_selected of timetables[current_timetable_num].selected_lectures){
-      if(before_selected.sid == lecture.sid && before_selected.class == lecture.class){
-        alert('이전 시간표에서 플랜b로 지정된 강의는 추가할 수 없습니다.')
-        return -1;
-      }
+    if (
+      checkBeforeSelectedLecture(timetables[current_timetable_num], lecture)
+    ) {
+      alert('이전 시간표에서 플랜b로 지정된 강의는 추가할 수 없습니다.');
+      return -1;
     }
 
     displayTime(lecture, color_num++ % 10, '1', 1);
@@ -243,7 +245,6 @@ function addLectureToTimeTable(lectures) {
     displayed_element.forEach((element) => {
       element.remove();
     });
-    
 
     if (lecture.time == '') {
       const nontime = document.querySelector('.nontimes');
@@ -253,6 +254,7 @@ function addLectureToTimeTable(lectures) {
 
       div.setAttribute('data-sid', lecture.sid);
       div.setAttribute('data-class', lecture.class);
+      div.setAttribute('data-name',lecture.name);
       div.className += 'subject';
 
       span.className += 'name';
@@ -286,7 +288,6 @@ function addLectureToTimeTable(lectures) {
       div.appendChild(span);
       div.appendChild(img);
       nontime.appendChild(div);
-      return;
     } else {
       document
         .querySelectorAll('.col' + `${class_num2 - 1}`)
@@ -412,6 +413,15 @@ function addLectureToTimeTable(lectures) {
           });
       }
     }
+    pushAddLi(
+      timetables[timetables[current_timetable_num].before_timetable_num],
+      timetables[current_timetable_num],
+      {
+        sid: lecture.sid,
+        class: lecture.class,
+        name: lecture.name,
+      }
+    );
   }
   return 0;
 }
@@ -863,8 +873,8 @@ function changeCheckState(isChecked, sid) {
   }
 }
 
-function canclePlanb(target) {
-  target.style.display = 'none';
+function canclePlanb() {
+  document.getElementById('cancle-planb').style.display = 'none';
   document.getElementById('generate-planb').style.display = 'block';
   document.getElementById('select-planb').style.display = 'none';
   //document.getElementById('planb-summary').style.display='none';
@@ -882,10 +892,29 @@ function getCheckedLectures() {
     '.timetable input[type="checkbox"]'
   )) {
     if (
-      checkbox.checked && (results.length==0 || 
-      !results.some(
-        (item) => item.sid == checkbox.parentElement.getAttribute('data-sid')
-      ))
+      checkbox.checked &&
+      (results.length == 0 ||
+        !results.some(
+          (item) => item.sid == checkbox.parentElement.getAttribute('data-sid')
+        ))
+    ) {
+      results.push(
+        timetables[current_timetable_num].lecture_list.find(
+          (item) => item.sid == checkbox.parentElement.getAttribute('data-sid')
+        )
+      );
+    }
+  }
+
+  for (let checkbox of document.querySelectorAll(
+    '.nontimes input[type="checkbox"]'
+  )) {
+    if (
+      checkbox.checked &&
+      (results.length == 0 ||
+        !results.some(
+          (item) => item.sid == checkbox.parentElement.getAttribute('data-sid')
+        ))
     ) {
       results.push(
         timetables[current_timetable_num].lecture_list.find(
@@ -939,6 +968,27 @@ function getPlanb(selected_lectures) {
       }
     }
 
+    for (let checkbox of document.querySelectorAll(
+      '.nontimes input[type="checkbox"]'
+    )) {
+      if (
+        !checkbox.checked &&
+        (timetable.lecture_list.length == 0 ||
+          !timetable.lecture_list.some(
+            (item) =>
+              item.sid == checkbox.parentElement.getAttribute('data-sid')
+          ))
+      ) {
+        console.log('fsaf: ', timetables[current_timetable_num].lecture_list);
+        timetable.addLecture(
+          timetables[current_timetable_num].lecture_list.find(
+            (item) =>
+              item.sid == checkbox.parentElement.getAttribute('data-sid')
+          )
+        );
+      }
+    }
+
     timetables.push(timetable);
     timetables[current_timetable_num].addPlanb(selected_lectures, timetable);
   }
@@ -953,7 +1003,10 @@ function pushRemoveLi(before_timetable, current_timetable, lecture) {
       (element) => element.sid == lecture.sid && element.class == lecture.class
     ) &&
     before_timetable.lecture_list.some(
-      (element) => element.sid == lecture.sid && element.class == lecture.class
+      (element) =>
+        element.sid == lecture.sid &&
+        element.class == lecture.class &&
+        !checkBeforeSelectedLecture(current_timetable, lecture)
     )
   ) {
     const li = document.createElement('li');
@@ -962,6 +1015,16 @@ function pushRemoveLi(before_timetable, current_timetable, lecture) {
   }
   console.log('pushRemove');
   popAddLi(lecture);
+}
+
+function callPushRemoveLi(timetable) {
+  for (let lecture of timetables[timetable.before_timetable_num].lecture_list) {
+    pushRemoveLi(
+      timetables[timetable.before_timetable_num],
+      timetable,
+      lecture
+    );
+  }
 }
 
 function pushAddLi(before_timetable, current_timetable, lecture) {
@@ -1073,7 +1136,7 @@ function deleteLectureDiv() {
     }
   }
 
-  for (let lecture of document.querySelectorAll('.nontimes')) {
+  for (let lecture of document.querySelectorAll('.nontimes>div')) {
     lecture.remove();
   }
 
@@ -1095,17 +1158,20 @@ document.getElementById('generate-planb').addEventListener('click', (event) => {
 });
 
 document.getElementById('cancle-planb').addEventListener('click', (event) => {
-  canclePlanb(event.target);
+  canclePlanb();
 });
 
 document.getElementById('select-planb').addEventListener('click', (event) => {
   let selected_lectures = getCheckedLectures();
   //deleteCheckedElements(selected_lectures);
   document.getElementById('goto-before').style.display = 'inline-block';
+  event.target.style.display = 'none';
   console.log('num: ', current_timetable_num);
   const planb = getPlanb(selected_lectures);
   console.log('planb: ', planb);
   replaceTimetable(planb);
+  callPushRemoveLi(timetables[current_timetable_num]);
+  canclePlanb();
   // deleteLectureDiv();
   // current_timetable_num = planb.timetable_num;
   // addLectureToTimeTable(planb.lecture_list);
@@ -1118,8 +1184,11 @@ document.getElementById('goto-before').addEventListener('click', (event) => {
   current_timetable_num =
     timetables[current_timetable_num].before_timetable_num;
   replaceTimetable(timetables[current_timetable_num]);
+  canclePlanb();
+  callPushRemoveLi(timetables[current_timetable_num]);
   if (timetables[current_timetable_num].is_root) {
     document.getElementById('goto-before').style.display = 'none';
+    document.getElementById('planb-summary').style.display = 'none';
   }
 });
 
