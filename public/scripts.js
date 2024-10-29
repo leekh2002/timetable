@@ -884,6 +884,12 @@ function canclePlanb() {
   )) {
     checkbox.remove();
   }
+
+  for (let checkbox of document.querySelectorAll(
+    '.nontimes input[type="checkbox"]'
+  )) {
+    checkbox.remove();
+  }
 }
 
 function getCheckedLectures() {
