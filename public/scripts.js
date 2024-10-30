@@ -232,7 +232,7 @@ function checkBeforeSelectedLecture(timetable, lecture) {
 
 function addLectureToTimeTable(lectures) {
   console.log('lectures: ', lectures);
-  for(let lecture of lectures){
+  for (let lecture of lectures) {
     if (
       checkBeforeSelectedLecture(timetables[current_timetable_num], lecture)
     ) {
@@ -255,7 +255,7 @@ function addLectureToTimeTable(lectures) {
 
       div.setAttribute('data-sid', lecture.sid);
       div.setAttribute('data-class', lecture.class);
-      div.setAttribute('data-name',lecture.name);
+      div.setAttribute('data-name', lecture.name);
       div.className += 'subject';
 
       span.className += 'name';
@@ -560,7 +560,7 @@ document.querySelector('.back-icon').addEventListener('click', (event) => {
   document.querySelector('.nontimes').style.display = 'block';
   if (!timetables[current_timetable_num].is_root) {
     document.getElementById('planb-summary').style.display = 'flex';
-    document.getElementById('goto-first').style.display = 'inline-block';
+    document.getElementById('goto-before').style.display = 'inline-block';
   }
 });
 
@@ -728,40 +728,52 @@ document
     }
   });
 
-document.getElementById('mov-timetable').addEventListener('click',(event)=>{
+document.getElementById('mov-timetable').addEventListener('click', (event) => {
   const now_page = document.querySelector('.now-page').textContent;
-  console.log('param: ',results[Number(now_page.textContent) - 1]);
-  const lectures=convertLectureFormat(results[Number(now_page) - 1]);
-  timetables[current_timetable_num].lecture_list=lectures;
-  timetables[current_timetable_num].planb_list=[];
+  console.log('param: ', results[Number(now_page.textContent) - 1]);
+  const lectures = convertLectureFormat(results[Number(now_page) - 1]);
+  console.log('current: ', timetables[current_timetable_num]);
+  for (let lecture of lectures) {
+    if (checkBeforeSelectedLecture(timetables[current_timetable_num], lecture))
+    {
+      alert('이전 시간표에서 플랜b로 지정된 강의는 추가할 수 없습니다.');
+      return -1;
+    }
+  }
+  timetables[current_timetable_num].lecture_list = lectures;
+  timetables[current_timetable_num].planb_list = [];
+  deleteLectureDiv();
+  callPushRemoveLi(timetables[current_timetable_num]);
   addLectureToTimeTable(lectures);
-})
+});
 
-function convertLectureFormat(target){
-  console.log('target: ',target);
-  const lectures=[];
-  for(let result of target){
-    for(let lecture of result){
-        const time_info={
-          day : lecture.day,
-          place : lecture.place,
-          start : lecture.time.split('~')[0],
-          end : lecture.time.split('~')[1]
-        }
-        if(lectures.length == 0 || !lectures.some(item => item.sid == lecture.sid)){
-          const lecture_info={
-            sid : lecture.sid,
-            class : lecture.class,
-            name : lecture.name,
-            prof_name : lecture.prof_name,
-            time : [time_info]
-          };
-    
-          lectures.push(lecture_info);
-        }
-        else{
-          const idx=lectures.findIndex(item => item.sid == lecture.sid);
-          lectures[idx].time.push(time_info);
+function convertLectureFormat(target) {
+  console.log('target: ', target);
+  const lectures = [];
+  for (let result of target) {
+    for (let lecture of result) {
+      const time_info = {
+        day: lecture.day,
+        place: lecture.place,
+        start: lecture.time.split('~')[0],
+        end: lecture.time.split('~')[1],
+      };
+      if (
+        lectures.length == 0 ||
+        !lectures.some((item) => item.sid == lecture.sid)
+      ) {
+        const lecture_info = {
+          sid: lecture.sid,
+          class: lecture.class,
+          name: lecture.name,
+          prof_name: lecture.prof_name,
+          time: [time_info],
+        };
+
+        lectures.push(lecture_info);
+      } else {
+        const idx = lectures.findIndex((item) => item.sid == lecture.sid);
+        lectures[idx].time.push(time_info);
       }
     }
   }
@@ -1220,11 +1232,6 @@ document.getElementById('select-planb').addEventListener('click', (event) => {
   replaceTimetable(planb);
   callPushRemoveLi(timetables[current_timetable_num]);
   canclePlanb();
-  // deleteLectureDiv();
-  // current_timetable_num = planb.timetable_num;
-  // addLectureToTimeTable(planb.lecture_list);
-
-  //createListRemoveAndAdd(planb, selected_lectures);
   document.getElementById('planb-summary').style.display = 'flex';
 });
 
@@ -1239,7 +1246,6 @@ document.getElementById('goto-before').addEventListener('click', (event) => {
     document.getElementById('planb-summary').style.display = 'none';
   }
 });
-
 
 class Timetable {
   lecture_list = [];

@@ -689,7 +689,6 @@ p {
   position: sticky;
   border-radius: 20px;
   background: red;
-  z-index: 1000;
   bottom: 16px;
   float: right;
 }
