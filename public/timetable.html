@@ -310,13 +310,17 @@
           </tbody>
         </table>
       </div>
+      <button id="mov-timetable" >시간표 저장</button>
     </div> 
 
     <!-- 시간표 테이블 공간 -->
       <div class="timetable-list" id="timetableList">
+        <!-- <button class="goto-generator">시간표 생성기 바로가기</button> -->
+        <div id="cancle-btn-section">
+          <button class="close-timetable">닫기</button>
+        </div>
         <button id="goto-before"><img src="./image/back.png" style="height: 15px; width: 15px;"alt="first">이전</button>
-        <button class="goto-generator">시간표 생성기 바로가기</button>
-        <button class="close-timetable">닫기</button>
+        
         <div id="planb-summary" style="display: none;">
           <div id="planb-remove-lecture">
             <h3>삭제해야할 과목</h3>
@@ -569,6 +573,8 @@
           </tbody>
         </table>
         <div class="nontimes"></div>
+        
+        <button class="goto-generator">시간표 생성기</button>
         <!-- 필터링 섹션 -->
         
       <form action="/process/filter" method="get" id="filterForm" style="display: none;">

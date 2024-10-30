@@ -254,7 +254,6 @@ div.subject {
   overflow: hidden;
 }
 .close-timetable {
-  position: absolute;
   top: 10px; /* 상단 여백 */
   right: 10px; /* 우측 여백 */
   background-color: #ff4d4d;
@@ -398,21 +397,11 @@ p {
   height: 13px;
 }
 
-.goto-generator {
-  display: inline-block; /* 텍스트 크기에 맞게 버튼 크기 조정 */
-  text-align: center;
-  border: none;
-  background: none;
-  color: blue; /* 텍스트 색상 파란색 */
-  font-weight: bold;
-  margin-bottom: 10px;
-  cursor: pointer; /* 클릭 가능한 커서로 변경 */
-  text-decoration: none; /* 밑줄 없애기 */
-}
 
-.goto-generator:hover {
-  background: none; /* hover 시에도 배경색이 없도록 설정 */
-}
+
+/* .goto-generator:hover {
+  background: none; 
+} */
 
 .filtering-section div:hover {
   transform: translateY(-5px); /* hover 시 살짝 위로 올라가는 효과 */
@@ -532,6 +521,7 @@ p {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  margin-bottom: 20px;
 }
 
 .time-table, .day-table {
@@ -694,3 +684,27 @@ p {
   display: none;
 }
 
+#mov-timetable{
+  width: fit-content;
+  position: sticky;
+  border-radius: 20px;
+  background: red;
+  z-index: 1000;
+  bottom: 16px;
+  float: right;
+}
+
+#cancle-btn-section{
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+.goto-generator {
+  position: sticky;
+  width: fit-content;
+  bottom: 0;
+  left: 50%;
+  border-radius: 20px;
+  transform: translateX(-50%);
+  z-index: 1000;
+}

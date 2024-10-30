@@ -232,14 +232,15 @@ function checkBeforeSelectedLecture(timetable, lecture) {
 
 function addLectureToTimeTable(lectures) {
   console.log('lectures: ', lectures);
-  for (let lecture of lectures) {
+  for(let lecture of lectures){
     if (
       checkBeforeSelectedLecture(timetables[current_timetable_num], lecture)
     ) {
       alert('이전 시간표에서 플랜b로 지정된 강의는 추가할 수 없습니다.');
       return -1;
     }
-
+  }
+  for (let lecture of lectures) {
     displayTime(lecture, color_num++ % 10, '1', 1);
     let flag = 0;
     displayed_element.forEach((element) => {
@@ -727,6 +728,47 @@ document
     }
   });
 
+document.getElementById('mov-timetable').addEventListener('click',(event)=>{
+  const now_page = document.querySelector('.now-page').textContent;
+  console.log('param: ',results[Number(now_page.textContent) - 1]);
+  const lectures=convertLectureFormat(results[Number(now_page) - 1]);
+  timetables[current_timetable_num].lecture_list=lectures;
+  timetables[current_timetable_num].planb_list=[];
+  addLectureToTimeTable(lectures);
+})
+
+function convertLectureFormat(target){
+  console.log('target: ',target);
+  const lectures=[];
+  for(let result of target){
+    for(let lecture of result){
+        const time_info={
+          day : lecture.day,
+          place : lecture.place,
+          start : lecture.time.split('~')[0],
+          end : lecture.time.split('~')[1]
+        }
+        if(lectures.length == 0 || !lectures.some(item => item.sid == lecture.sid)){
+          const lecture_info={
+            sid : lecture.sid,
+            class : lecture.class,
+            name : lecture.name,
+            prof_name : lecture.prof_name,
+            time : [time_info]
+          };
+    
+          lectures.push(lecture_info);
+        }
+        else{
+          const idx=lectures.findIndex(item => item.sid == lecture.sid);
+          lectures[idx].time.push(time_info);
+      }
+    }
+  }
+
+  return lectures;
+}
+
 function addLectureToGeneratedTimeTable(lectures) {
   let color = 0;
   console.log('lectures: ', lectures);
@@ -1197,6 +1239,7 @@ document.getElementById('goto-before').addEventListener('click', (event) => {
     document.getElementById('planb-summary').style.display = 'none';
   }
 });
+
 
 class Timetable {
   lecture_list = [];

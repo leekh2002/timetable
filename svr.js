@@ -272,7 +272,7 @@ app.get('/process/filter', async (req, res) => {
               reject(err);
             }
             const exec = conn.query(
-              `SELECT a.sid, b.prof_name, a.day, a.time, a.place, c.name
+              `SELECT a.sid, a.class, b.prof_name, a.day, a.time, a.place, c.name
                 FROM time_info a
                 JOIN lecture b ON a.sid = b.sid AND a.class = b.class
                 JOIN subject c ON a.sid = c.sid
