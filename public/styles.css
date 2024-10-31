@@ -707,3 +707,11 @@ p {
   transform: translateX(-50%);
   z-index: 1000;
 }
+
+ul{
+  padding: 0;
+}
+
+li{
+  list-style-type: none;
+}
