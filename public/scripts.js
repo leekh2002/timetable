@@ -1056,6 +1056,16 @@ function getPlanb(selected_lectures) {
     .timetable;
 }
 
+function callPushRemoveLi(timetable) {
+  for (let lecture of timetables[timetable.before_timetable_num].lecture_list) {
+    pushRemoveLi(
+      timetables[timetable.before_timetable_num],
+      timetable,
+      lecture
+    );
+  }
+}
+
 function pushRemoveLi(before_timetable, current_timetable, lecture) {
   const remove_ul = document.querySelector('#planb-remove-lecture > ul');
   if (
@@ -1075,16 +1085,6 @@ function pushRemoveLi(before_timetable, current_timetable, lecture) {
   }
   console.log('pushRemove');
   popAddLi(lecture);
-}
-
-function callPushRemoveLi(timetable) {
-  for (let lecture of timetables[timetable.before_timetable_num].lecture_list) {
-    pushRemoveLi(
-      timetables[timetable.before_timetable_num],
-      timetable,
-      lecture
-    );
-  }
 }
 
 function pushAddLi(before_timetable, current_timetable, lecture) {
