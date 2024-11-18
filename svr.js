@@ -14,7 +14,7 @@ const pool = mysql.createPool({
   multipleStatements: true,
   debug: false,
 });
-
+    
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

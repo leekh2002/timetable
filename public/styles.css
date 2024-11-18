@@ -135,6 +135,10 @@ button:hover {
 .timetable .time {
   background-color: #f0f0f0;
   font-weight: bold;
+  /* text-align: center; */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 thead th {
@@ -659,10 +663,21 @@ p {
   display: none;
 }
 
-#generate-planb, #cancle-planb{
+#cancle-planb{
   width: fit-content;
   background: none;
   color: red;
+}
+#generate-planb{
+  width: fit-content;
+  color: #000;
+  background: #19f0d3;
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+
+#generate-planb {
+  border: #aaa;
 }
 
 #select-planb{
